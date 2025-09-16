@@ -26,14 +26,33 @@ A opção melhor agora é o React-Native.
   - **Cloud Storage**: armazenamento de arquivos (imagens, vídeos, documentos). Esse serviço precisa está no plano pago.
 - **problema**: armazena 5gb em cloud storage e armazena 1 gb no cloud firestore
 Mesmo com esses problemas, a simplicidade na autenticação ainda faz valer a pena. E para o MVP, ainda dá para ser usado.
+Para Storage gratuitos temos como opção:
+
 
 ---
 
-### 🔹 Banco de Dados
+### 🔹 Banco de Dados e Armazenamento
+
 - **Cloud Firestore (NoSQL)**  
   - Banco de dados não relacional, baseado em documentos.  
   - Sincronização em tempo real entre usuários e dispositivos.  
   - Escalabilidade automática e integrada ao ecossistema Firebase.  
+  - Pode armazenar **metadados de arquivos**, como links de vídeos, timestamps e status, enquanto os arquivos reais ficam em um serviço de storage.
+
+- **Cloudflare R2 (Storage de Vídeos)**  
+  - Serviço de armazenamento de arquivos **S3-compatible**.  
+  - **Free Tier:** 10 GB de armazenamento + 1 milhão de requisições/mês.  
+  - **Vantagem:** **Sem taxas de egress** (downloads gratuitos).  
+  - **Cartão:** ✅ Não exige cartão de crédito.  
+  - **Integração:** Pode ser usado em conjunto com Firestore, salvando apenas o **link/objeto R2** nos documentos do Firestore para relacionar vídeos a usuários, datas e status.  
+
+- **Backblaze B2 (Storage de Vídeos)**  
+  - **Free Tier:** 10 GB de armazenamento + 1 GB de download/dia.  
+  - **Cartão:** ✅ Não exige cartão de crédito.  
+  - **Vantagem:** Preço muito baixo caso ultrapasse o limite gratuito.  
+  - **Integração:** Igual ao R2, os arquivos ficam no B2 e apenas os metadados e links são salvos no Firestore.
+
+
 
 ---
 
