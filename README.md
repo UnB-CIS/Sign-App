@@ -1,97 +1,103 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+<div align="center">
 
-# Getting Started
+<img style="width:250px; height: 90px " src="https://cis.ieee.org/images/files/Branding/logos/white/IEEE_CIS_logo_White_RGB_300ppi.png" />
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+# Sign App
 
-## Step 1: Start Metro
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/seu-usuario/sign-app)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://claude.ai/chat/LICENSE)
+[![React Native](https://img.shields.io/badge/React%20Native-0.73-61DAFB.svg?logo=react)](https://reactnative.dev/)
+[![Node](https://img.shields.io/badge/Node-22.0-339933.svg?logo=node.js)](https://nodejs.org/)
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+</div>
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+Repositório principal do app **Sign** desenvolvido pelo IEEE Computational Intelligence Society
 
-```sh
-# Using npm
-npm start
+### Sumário
 
-# OR using Yarn
-yarn start
+* [Pré-requisitos](#pré-requisitos)
+* [Como Rodar o Projeto](#como-rodar-o-projeto)
+* [O que o Script de Automação Faz?](#dentro-dos-entrypoints)
+* [Solução de Problemas (Troubleshooting)](#solução-de-problemas-troubleshooting)
+
+
+### Pré-requisitos
+
+Antes de começar, certifique-se de que você tem as seguintes ferramentas instaladas e configuradas em sua máquina:
+
+  * [**Git**](https://git-scm.com/downloads)
+  * [**Node.js e NPM**](https://nodejs.org/)
+  * [**Docker e Docker Compose**](https://www.docker.com/products/docker-desktop/)
+  * [**Android SDK Command-Line Tools**](https://developer.android.com/studio) 
+  * **Pelo menos um Emulador (AVD)** Você precisa ter um Android Virtual Device criado.
+
+**IMPORTANTE:** Após instalar o Android SDK, é necessário configurar a variável de ambiente `ANDROID_HOME` apontando para o diretório do SDK. 
+
+
+
+### Como Rodar o Projeto
+
+Com o ambiente devidamente configurado,
+
+#### Passo 1: Clone o Repositório
+
+```bash
+git clone https://github.com/UnB-CIS/Sign-App.git
+cd Sign-App
 ```
 
-## Step 2: Build and run your app
+#### Passo 2: Execute o Script de Automação
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+Escolha o comando correspondente ao seu sistema operacional. O comando cobrirá desde a instalação de dependências dentro do Docker até a inicialização do app.
 
-### Android
+##### 🐧 Para Linux ou macOS:
 
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```bash
+npm run dev:start:unix
 ```
 
-### iOS
+##### 💻 Para Windows (usando CMD ou PowerShell):
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+```bash
+npm run dev:start:win
 ```
 
-Then, and every time you update your native dependencies, run:
+E **pronto**, suas alterações no código serão refletidas automaticamente no emulador (Hot Reload).
 
-```sh
-bundle exec pod install
-```
+### Dentro dos entrypoints 
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+O comando `npm run dev:start:*` executa uma série de passos para criar um ambiente de desenvolvimento completo e funcional:
 
-```sh
-# Using npm
-npm run ios
+ - 1 Verifica se a variável de ambiente `ANDROID_HOME` está configurada.
+ - 2 Encontra um emulador Android (AVD) disponível em sua máquina.
+ - 3 Inicia o emulador automaticamente em segundo plano.
+ - 4 Aguarda o sistema operacional do emulador carregar por completo.
+ - 5 Inicia o container Docker (via `docker-compose`), que irá:
 
-# OR using Yarn
-yarn ios
-```
+  - Construir a imagem, executando `npm install` **dentro do container**.
+  - Iniciar o servidor Metro Bundler.
+    🔗 Configura o `adb reverse`, permitindo que o app no emulador se comunique com o Metro dentro do container.
+    📲 Instala e inicia o aplicativo React Native no emulador.
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+### Solução de Problemas (Troubleshooting)
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+1.  **Erro: `A variável de ambiente ANDROID_HOME não está definida.`**
 
-## Step 3: Modify your app
+      * **Solução:** Você precisa criar a variável de ambiente `ANDROID_HOME` e fazê-la apontar para a pasta onde seu Android SDK foi instalado.
 
-Now that you have successfully run the app, let's make changes!
+2.  **Erro: `Nenhum emulador (AVD) encontrado.`**
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+      * **Solução:** Você precisa criar um dispositivo virtual através do AVD Manager no Android Studio ou via linha de comando com `avdmanager`.
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+3.  **O Docker parece não funcionar ou o comando `docker-compose` falha.**
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+      * **Solução:** Certifique-se de que o Docker Desktop está em execução na sua máquina.
 
-## Congratulations! :tada:
+4.  **O comando `adb` não foi encontrado.**
 
-You've successfully run and modified your React Native App. :partying_face:
+      * **Solução:** O `adb` fica na pasta `platform-tools` dentro do seu Android SDK. Adicione `%ANDROID_HOME%\platform-tools` (Windows) ou `$ANDROID_HOME/platform-tools` (Linux/macOS) à sua variável de ambiente `PATH`.
 
-### Now what?
+5.  **Erro durante o `docker-compose up` (falha no `npm install` dentro do container).**
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+      * **Solução:** Isso pode ser um problema de rede ou um pacote quebrado no `package.json`. Tente forçar uma reconstrução limpa da imagem com o comando: `docker-compose build --no-cache` e depois rode o script de start novamente. Verifique o log do Docker para mensagens de erro específicas do `npm`.
 
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
