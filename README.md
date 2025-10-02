@@ -33,7 +33,7 @@ Antes de começar, certifique-se de que você tem as seguintes ferramentas insta
 
 **IMPORTANTE:** Após instalar o Android SDK, é necessário configurar a variável de ambiente `ANDROID_HOME` apontando para o diretório do SDK. 
 
-
+* [Tutorial de instalação e configuração do Android Studio e AVD Manager](https://youtu.be/XfJj6EQZfAc)
 
 ### Como Rodar o Projeto
 
