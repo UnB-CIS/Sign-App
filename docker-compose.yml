@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+
+  sign_mobile:
+    build: .
+    container_name: sign_mobile_app
+    ports:
+      - "8081:8081"
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+volumes:
+  node_modules: {}
+
