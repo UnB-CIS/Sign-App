@@ -12,7 +12,6 @@
 </div>
 
 Repositório principal do app **Sign** desenvolvido pelo IEEE Computational Intelligence Society
-
 ### Sumário
 
 * [Pré-requisitos](#pré-requisitos)
@@ -50,15 +49,24 @@ cd Sign-App
 
 Escolha o comando correspondente ao seu sistema operacional. O comando cobrirá desde a instalação de dependências dentro do Docker até a inicialização do app.
 
-##### 🐧 Para Linux ou macOS:
+##### 🐧 Para Linux ou macOS no **Emulador**:
 
 ```bash
-npm run dev:start:unix
+npm install
+ANDROID_HOME="/home/$(whoami)/Android/Sdk" npm run dev:start:unix
 ```
 
-##### 💻 Para Windows (usando CMD ou PowerShell):
+##### 🐧 Para Linux ou macOS no Dispositivo USB:
 
 ```bash
+npm install
+ANDROID_HOME="/home/$(whoami)/Android/Sdk" npm run dev:start:unix device
+```
+
+##### 💻 Para Windows (usando CMD ou PowerShell) no **Emulador**:
+
+```bash
+npm install
 npm run dev:start:win
 ```
 
