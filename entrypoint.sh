@@ -15,7 +15,7 @@ log() {
 
 # PASSO 0: Derrubar containers antigos
 log "Garantindo que containers antigos estao parados e removidos..."
-docker-compose down
+docker compose down
 log "Ambiente Docker limpo."
 
 # PASSO 1: Verificar se o ANDROID_HOME está configurado
@@ -23,11 +23,14 @@ if [ -z "$ANDROID_HOME" ]; then
   echo "Erro: A variável de ambiente ANDROID_HOME não está definida."
   exit 1
 fi
-export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools
+
+export ANDROID_HOME=$HOME/Android/Sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/platform-tools
 
 # PASSO 2: Iniciar o container Docker com o Metro Bundler PRIMEIRO
 log "Iniciando o container Docker com docker-compose..."
-docker-compose up -d --build
+docker compose up -d --build
 
 # PASSO 3: Aguardar a PORTA 8081 ficar pronta
 log "Aguardando a porta 8081 ficar pronta..."
@@ -69,7 +72,6 @@ elif [ "$MODE" == "device" ]; then
   log "Aguardando dispositivo físico via USB... (Certifique-se de que a depuração USB está ativada e autorizada)"
   adb wait-for-device
   log "Dispositivo físico detectado!"
-
 else
   # --- Bloco de Erro para opção inválida ---
   echo "Erro: Modo inválido '$MODE'. Use 'emulator' ou 'device'."
@@ -87,7 +89,7 @@ log "Compilando o app com Gradle (assembleDebug)..."
 (cd android && ./gradlew assembleDebug)
 log "Instalando o app no dispositivo (installDebug)..."
 (cd android && ./gradlew installDebug)
-PACKAGE_NAME="com.auraapp"
+PACKAGE_NAME="com.signapp"
 log "Iniciando o app ($PACKAGE_NAME) no dispositivo..."
 adb shell am start -n "$PACKAGE_NAME/$PACKAGE_NAME.MainActivity"
 
