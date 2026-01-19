@@ -20,3 +20,9 @@ const getCurrentUserId = () => {
     return auth.currentUser?.uid as string;
   };
 }
+
+export {
+  isUserAuthenticated,
+  signOutUser,
+  getCurrentUserId
+};
