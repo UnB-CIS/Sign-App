@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import "./global.css";
 import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { useAuth } from './src/hooks/useAuth';
@@ -10,7 +9,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 // @types
 import { AuthStackParamList, AppStackParamList } from './src/@types/navigation';
 type RootStackParamList = AuthStackParamList & AppStackParamList;
- 
+
 
 
 const linkingConfig: LinkingOptions<RootStackParamList> = {
@@ -21,7 +20,7 @@ const linkingConfig: LinkingOptions<RootStackParamList> = {
       // AuthNavigator (AuthStackParamList)
       Register: 'register',
       Login: 'login',
-      
+
       // AppNavigator (AppStackParamList)
       MainTabs: {
         screens: {
@@ -44,7 +43,7 @@ function RootNavigator() {
     setTimeout(() => {
       setIsAppLoading(false);
       // react-native-splash-screen (nativo) o .hide() aqui
-    }, 1500); 
+    }, 1500);
   }, []);
 
 
@@ -55,11 +54,9 @@ function RootNavigator() {
   // <></> (Fragmento) necessário
   return (
     <>
-      {token == null ? (
-        <AuthNavigator />
-      ) : (
-        <AppNavigator />
-      )}
+
+
+      <AppNavigator />
     </>
   );
 }
@@ -67,7 +64,7 @@ function RootNavigator() {
 
 export default function App() { // o AuthProvider envolve tudo pois passa diretamente o estado do usuário para todos os componentes dentro
   return (
-    <AuthProvider> 
+    <AuthProvider>
       <NavigationContainer<RootStackParamList> // após isso vem o de navegação
         linking={linkingConfig}
         fallback={

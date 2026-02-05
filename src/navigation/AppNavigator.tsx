@@ -9,7 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 import { AppStackParamList, AppTabParamList } from '../@types/navigation';
 
 import NotificationScreen from '../screens/app/NotificationScreen';
-import HomeScreen from '../screens/app/Ranking';
+import HomeScreen from '../screens/app/HomeScreen.tsx';
 import EventosScreen from '../screens/app/Ranking';
 import PerfilScreen from '../screens/app/PerfilScreen';
 
@@ -50,12 +50,12 @@ function MainTabsNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName = 'home'; 
+          let iconName = 'home';
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'NewPost') {
             iconName = focused ? 'add-circle' : 'add-circle-outline';
-            return <Ionicons name={iconName} size={32} color={color} />; 
+            return <Ionicons name={iconName} size={32} color={color} />;
           } else if (route.name === 'Eventos') {
             iconName = focused ? 'calendar' : 'calendar-outline';
           } else if (route.name === 'Perfil') {
@@ -63,7 +63,7 @@ function MainTabsNavigator() {
           }
           return <Ionicons name={iconName as string} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#6200EE', 
+        tabBarActiveTintColor: '#6200EE',
         tabBarInactiveTintColor: 'gray',
         tabBarShowLabel: false, // esconde os nomes (Home, Perfil, etc)
       })}
@@ -74,7 +74,7 @@ function MainTabsNavigator() {
         options={{
           headerTitle: 'Feed', // Título 
           headerTitleAlign: 'center',
-          headerLeft: () => <HeaderLogo />, 
+          headerLeft: () => <HeaderLogo />,
           headerRight: () => <NotificationsButton />, // Botão de Notificações
         }}
       />
@@ -97,7 +97,7 @@ export default function AppNavigator() {
         options={{ headerShown: false }} // Esconde o header duplicado do Stack
       />
       <Stack.Screen
-        name="Notifications" 
+        name="Notifications"
         component={NotificationScreen}
         options={{ title: 'Notificações' }}
       />
