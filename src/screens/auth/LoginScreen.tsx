@@ -2,19 +2,30 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useAuth } from '../../hooks/useAuth';
 import { AuthScreenProps } from '../../@types/navigation';
-
+import { signInWithEmail } from '../../services/models/user';
+import { isUserAuthenticated } from '../../services/auth';
 export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { signIn } = useAuth();
 
   const handleLogin = async () => {
+
     if (!email || !password) {
       Alert.alert('Erro', 'Preencha todos os campos.');
       return;
     }
     try {
-      await signIn('token-falso-de-login');
+      //await signIn('token-falso-de-login');
+      const { authUser, profile } = await signInWithEmail(email, password);
+      if (isUserAuthenticated()) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainTabs' as any }],
+        });
+      } else {
+        Alert.alert('Erro no Login', 'Não foi possível realizar o login.');
+      }
     } catch (error) {
       Alert.alert('Erro no Login', 'Email ou senha inválidos.');
     }
@@ -23,7 +34,7 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Fazer Login</Text>
-      
+
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -39,7 +50,7 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
         onChangeText={setPassword}
         secureTextEntry
       />
-      
+
       <Button title="Entrar" onPress={handleLogin} />
 
       <TouchableOpacity onPress={() => navigation.navigate('Register')}>

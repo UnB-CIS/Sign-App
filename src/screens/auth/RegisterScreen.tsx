@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { AuthScreenProps } from '../../@types/navigation';
 import { useAuth } from '../../hooks/useAuth';
-
+import { registerUserWithEmail } from '../../services/models/user';
 export default function RegisterScreen({ navigation }: AuthScreenProps<'Register'>) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,10 +18,11 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
       Alert.alert('Erro', 'As senhas não coincidem.');
       return;
     }
-    
+
     try {
       Alert.alert('Sucesso', 'Conta criada!');
-      await signIn('token-falso-de-cadastro');
+      //await signIn('token-falso-de-cadastro')
+      const uid = await registerUserWithEmail({ email, password, username: email.split('@')[0] });
     } catch (error) {
       Alert.alert('Erro no Cadastro', 'Não foi possível criar a conta.');
     }
@@ -30,7 +31,7 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Criar Conta</Text>
-      
+
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -53,7 +54,7 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
         onChangeText={setConfirmPassword}
         secureTextEntry
       />
-      
+
       <Button title="Cadastrar" onPress={handleRegister} />
 
       <TouchableOpacity onPress={() => navigation.navigate('Login')}>
