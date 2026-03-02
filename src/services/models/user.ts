@@ -1,4 +1,4 @@
-import { doc, getDoc, serverTimestamp, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, UserCredential } from 'firebase/auth';
 import { Collections } from '../enums';
@@ -81,4 +81,17 @@ async function getCurrentUserById(uid: string): Promise<Users | null> {
 
 
 
-export { registerUserWithEmail, signInWithEmail, getCurrentUserById };
+async function updateUserProfile(
+    uid: string,
+    updates: Partial<Pick<Users, 'name' | 'username' | 'profilePictureUrl' | 'settings'>> & Record<string, any>
+) {
+    const ref = doc(db, Collections.USERS, uid);
+    await updateDoc(ref, updates);
+}
+
+async function getUserStreak(uid: string): Promise<Streak | null> {
+    const user = await getCurrentUserById(uid);
+    return user?.streak ?? null;
+}
+
+export { registerUserWithEmail, signInWithEmail, getCurrentUserById, updateUserProfile, getUserStreak };
