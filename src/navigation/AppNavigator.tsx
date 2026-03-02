@@ -12,6 +12,7 @@ import NotificationScreen from '../screens/app/NotificationScreen';
 import HomeScreen from '../screens/app/HomeScreen.tsx';
 import EventosScreen from '../screens/app/Ranking';
 import PerfilScreen from '../screens/app/PerfilScreen';
+import QuizScreen from '../screens/app/QuizScreen';
 
 
 function NewPostScreen() {
@@ -100,6 +101,11 @@ export default function AppNavigator() {
         name="Notifications"
         component={NotificationScreen}
         options={{ title: 'Notificações' }}
+      />
+      <Stack.Screen
+        name="Quiz"
+        component={QuizScreen}
+        options={{ title: 'Quiz' }}
       />
     </Stack.Navigator>
   );

@@ -47,10 +47,20 @@ export type AuthStackParamList = {
 };
 
 export type AppStackParamList = {
-  MainTabs: NavigatorScreenParams<AppTabParamList>; // Aninhando o Tab Navigator
+  MainTabs: NavigatorScreenParams<AppTabParamList>;
   Notifications: undefined;
-
-  // PesquisarDetail: { itemId: string };
+  Quiz: {
+    lessonId: string;
+    moduleId: string;
+    questions: {
+      id: string;
+      prompt: string;
+      options?: string[];
+      correctAnswer?: string;
+      type: string;
+    }[];
+  };
+  LessonComplete: { lessonId: string; moduleId: string; score: number; xpEarned: number };
 };
 
 // Define as telas da Tab Navigator (após o login)
