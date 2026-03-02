@@ -49,8 +49,7 @@ export type AuthStackParamList = {
 export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<AppTabParamList>; // Aninhando o Tab Navigator
   Notifications: undefined;
-
-  // PesquisarDetail: { itemId: string };
+  Configuracoes: undefined;
 };
 
 // Define as telas da Tab Navigator (após o login)
