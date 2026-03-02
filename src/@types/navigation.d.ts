@@ -42,8 +42,9 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 
 // Define as telas que fazem parte da pilha de autenticacao
 export type AuthStackParamList = {
-  Login: undefined; // A tela de Login nao recebe parâmetros
-  Register: undefined; // A tela de Register também nao
+  Onboarding: undefined;
+  Login: undefined;
+  Register: undefined;
 };
 
 export type AppStackParamList = {
