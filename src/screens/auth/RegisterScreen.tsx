@@ -20,29 +20,21 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const validateEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-
-  const validatePassword = (value: string) => value.length >= 6;
-
   const handleRegister = async () => {
     if (!name.trim()) {
-      Alert.alert('Erro', 'Preencha seu nome completo.');
+      Alert.alert('Erro', 'Preencha seu nome.');
       return;
     }
-    if (!validateEmail(email)) {
-      Alert.alert('Erro', 'Digite um email válido.');
+    if (!email.trim()) {
+      Alert.alert('Erro', 'Preencha seu email.');
       return;
     }
-    if (!validatePassword(password)) {
+    if (password.length < 6) {
       Alert.alert('Erro', 'A senha deve ter no mínimo 6 caracteres.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      Alert.alert('Erro', 'As senhas não coincidem.');
       return;
     }
     if (!acceptedTerms) {
@@ -76,51 +68,81 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
-          <Text style={styles.title}>Criar Conta</Text>
-          <Text style={styles.subtitle}>Comece a aprender Libras hoje!</Text>
+          <Text style={styles.title}>Cadastro</Text>
 
+          {/* Social buttons */}
+          <View style={styles.socialRow}>
+            <TouchableOpacity style={styles.socialButton}>
+              <Ionicons name="logo-facebook" size={22} color="#1877F2" />
+              <Text style={styles.socialText}>Facebook</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.socialButton}>
+              <Ionicons name="logo-google" size={22} color="#EA4335" />
+              <Text style={styles.socialText}>Google</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Divider */}
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>Ou</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Form */}
           <TextInput
             style={styles.input}
-            placeholder="Nome completo"
+            placeholder="Nome"
+            placeholderTextColor={Colors.textSecondary}
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
           />
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder="Email/Telefone"
+            placeholderTextColor={Colors.textSecondary}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Senha"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Confirmar Senha"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Senha"
+              placeholderTextColor={Colors.textSecondary}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+              <Ionicons
+                name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                size={22}
+                color={Colors.textSecondary}
+              />
+            </TouchableOpacity>
+          </View>
 
+          {/* Terms checkbox */}
           <TouchableOpacity
             style={styles.termsRow}
             onPress={() => setAcceptedTerms(!acceptedTerms)}
+            activeOpacity={0.7}
           >
-            <Ionicons
-              name={acceptedTerms ? 'checkbox' : 'square-outline'}
-              size={22}
-              color={acceptedTerms ? Colors.primary : Colors.textSecondary}
-            />
-            <Text style={styles.termsText}>Aceito os termos de uso e política de privacidade</Text>
+            <View style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]}>
+              {acceptedTerms && <Ionicons name="checkmark" size={14} color={Colors.textOnPrimary} />}
+            </View>
+            <Text style={styles.termsText}>
+              Eu concordo com os{' '}
+              <Text style={styles.termsLink}>Termos de Serviço</Text>
+              {' '}e{' '}
+              <Text style={styles.termsLink}>Politica de Privacidade</Text>
+            </Text>
           </TouchableOpacity>
 
+          {/* Submit button */}
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleRegister}
@@ -129,28 +151,16 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
             {loading ? (
               <ActivityIndicator color={Colors.textOnPrimary} />
             ) : (
-              <Text style={styles.buttonText}>Cadastrar</Text>
+              <Text style={styles.buttonText}>Criar Conta</Text>
             )}
           </TouchableOpacity>
 
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>ou</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <TouchableOpacity style={styles.socialButton}>
-            <Ionicons name="logo-google" size={20} color={Colors.text} />
-            <Text style={styles.socialText}>Entrar com Google</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.socialButton}>
-            <Ionicons name="logo-facebook" size={20} color="#1877F2" />
-            <Text style={styles.socialText}>Entrar com Facebook</Text>
-          </TouchableOpacity>
-
+          {/* Login link */}
           <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.linkText}>Já tem uma conta? Fazer Login</Text>
+            <Text style={styles.loginText}>
+              Já tem uma conta?{' '}
+              <Text style={styles.loginLink}>Entrar</Text>
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -163,64 +173,40 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1 },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xxxl + Spacing.xl,
+    paddingBottom: Spacing.xxl,
   },
   title: {
-    fontSize: FontSize.xxl,
+    fontSize: FontSize.title,
     fontWeight: 'bold',
-    color: Colors.text,
-    marginBottom: Spacing.xs,
+    color: Colors.accent,
+    marginBottom: Spacing.xxxl,
   },
-  subtitle: {
-    fontSize: FontSize.base,
-    color: Colors.textSecondary,
+  socialRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
     marginBottom: Spacing.xl,
   },
-  input: {
-    width: '100%',
-    height: 50,
-    borderColor: Colors.border,
-    borderWidth: 1,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.base,
-    fontSize: FontSize.base,
-    backgroundColor: Colors.background,
-  },
-  termsRow: {
+  socialButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    marginBottom: Spacing.lg,
-    gap: Spacing.sm,
-  },
-  termsText: {
-    flex: 1,
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-  },
-  button: {
-    width: '100%',
-    height: 50,
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.md,
     justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+    backgroundColor: Colors.surface,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
   },
-  buttonDisabled: { opacity: 0.7 },
-  buttonText: {
-    color: Colors.textOnPrimary,
+  socialText: {
     fontSize: FontSize.base,
-    fontWeight: '600',
+    color: Colors.text,
+    fontWeight: '500',
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   dividerLine: {
     flex: 1,
@@ -230,27 +216,87 @@ const styles = StyleSheet.create({
   dividerText: {
     marginHorizontal: Spacing.md,
     color: Colors.textSecondary,
-    fontSize: FontSize.sm,
+    fontSize: FontSize.base,
   },
-  socialButton: {
-    width: '100%',
-    height: 50,
-    borderColor: Colors.border,
-    borderWidth: 1,
-    borderRadius: BorderRadius.md,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+  input: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.md,
+    fontSize: FontSize.base,
+    color: Colors.text,
     marginBottom: Spacing.md,
-    gap: Spacing.sm,
+    height: 56,
   },
-  socialText: {
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.base,
+    height: 56,
+    paddingHorizontal: Spacing.base,
+  },
+  passwordInput: {
+    flex: 1,
     fontSize: FontSize.base,
     color: Colors.text,
   },
-  linkText: {
-    color: Colors.primary,
-    marginTop: Spacing.lg,
-    fontSize: FontSize.md,
+  eyeIcon: {
+    padding: Spacing.xs,
+  },
+  termsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+    flexShrink: 0,
+  },
+  checkboxChecked: {
+    backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
+  },
+  termsText: {
+    flex: 1,
+    fontSize: FontSize.sm,
+    color: Colors.text,
+    lineHeight: 20,
+  },
+  termsLink: {
+    color: Colors.accent,
+    fontWeight: '500',
+  },
+  button: {
+    backgroundColor: Colors.accent,
+    borderRadius: 14,
+    height: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.xl,
+  },
+  buttonDisabled: { opacity: 0.7 },
+  buttonText: {
+    color: Colors.textOnPrimary,
+    fontSize: FontSize.base,
+    fontWeight: '700',
+  },
+  loginText: {
+    textAlign: 'left',
+    fontSize: FontSize.base,
+    color: Colors.text,
+  },
+  loginLink: {
+    color: Colors.accent,
+    fontWeight: '600',
   },
 });

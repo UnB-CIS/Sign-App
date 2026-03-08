@@ -1,17 +1,17 @@
 export const Colors = {
   primary: '#6200EE',
   primaryDark: '#2D4CC8',
-  accent: '#2B4CDE',
+  accent: '#3461FD',
   error: '#FF3B30',
   success: '#00C853',
   warning: '#FF9500',
 
   background: '#FFFFFF',
-  surface: '#F5F5F5',
+  surface: '#F5F9FE',
   card: '#FFFFFF',
 
   text: '#1A1A1A',
-  textSecondary: '#7A869A',
+  textSecondary: '#7C8BA0',
   textLight: '#9CA3AF',
   textOnPrimary: '#FFFFFF',
 
