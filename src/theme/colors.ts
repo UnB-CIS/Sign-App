@@ -1,7 +1,7 @@
 export const Colors = {
   primary: '#6200EE',
   primaryDark: '#2D4CC8',
-  accent: '#2B4CDE',
+  accent: '#3461FD',
   error: '#FF3B30',
   success: '#00C853',
   warning: '#FF9500',
