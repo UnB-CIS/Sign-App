@@ -66,7 +66,7 @@ ANDROID_HOME="/home/$(whoami)/Android/Sdk" npm run dev:start:unix
 
 ```bash
 npm install
-ANDROID_HOME="/home/$(whoami)/Android/Sdk" npm run dev:start:unix device
+ANDROID_HOME="/home/$(whoami)/Android/Sdk" npm run dev:start:unixdevice
 ```
 
 ##### 💻 Para Windows (usando CMD ou PowerShell) no **Emulador**:
