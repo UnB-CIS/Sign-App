@@ -13,26 +13,19 @@ log() {
   echo -e "\n${GREEN}[INFO]${NC} $1"
 }
 
-# PASSO 0: Derrubar containers antigos
-log "Garantindo que containers antigos estao parados e removidos..."
-docker compose down
-log "Ambiente Docker limpo."
-
-# PASSO 1: Verificar se o ANDROID_HOME está configurado
+# PASSO 0: Verificar se o ANDROID_HOME está configurado
 if [ -z "$ANDROID_HOME" ]; then
   echo "Erro: A variável de ambiente ANDROID_HOME não está definida."
   exit 1
 fi
+export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools
 
-export ANDROID_HOME=$HOME/Android/Sdk
-export PATH=$PATH:$ANDROID_HOME/emulator
-export PATH=$PATH:$ANDROID_HOME/platform-tools
+# PASSO 1: Iniciar o Metro Bundler diretamente no host (com reset de cache)
+log "Iniciando o Metro Bundler no host..."
+npx react-native start --host 0.0.0.0 --reset-cache &
+METRO_PID=$!
 
-# PASSO 2: Iniciar o container Docker com o Metro Bundler PRIMEIRO
-log "Iniciando o container Docker com docker-compose..."
-docker compose up -d --build
-
-# PASSO 3: Aguardar a PORTA 8081 ficar pronta
+# PASSO 2: Aguardar a PORTA 8081 ficar pronta
 log "Aguardando a porta 8081 ficar pronta..."
 until /usr/bin/nc -zvw1 127.0.0.1 8081 &> /dev/null; do
   echo -n "."
@@ -41,7 +34,7 @@ done
 log "Porta 8081 detectada! Prosseguindo..."
 
 # ==================================================================
-# PASSO 4, 5, 6: LÓGICA CONDICIONAL PARA EMULADOR OU DISPOSITIVO
+# PASSO 3, 4, 5: LÓGICA CONDICIONAL PARA EMULADOR OU DISPOSITIVO
 # ==================================================================
 if [ "$MODE" == "emulator" ]; then
   # --- Bloco de código para o Emulador ---
@@ -51,6 +44,7 @@ if [ "$MODE" == "emulator" ]; then
   AVD_NAME=$(emulator -list-avds | head -n 1)
   if [ -z "$AVD_NAME" ]; then
     echo "Erro: Nenhum emulador (AVD) encontrado."
+    kill $METRO_PID 2>/dev/null
     exit 1
   fi
   log "Usando o emulador: $AVD_NAME"
@@ -72,17 +66,19 @@ elif [ "$MODE" == "device" ]; then
   log "Aguardando dispositivo físico via USB... (Certifique-se de que a depuração USB está ativada e autorizada)"
   adb wait-for-device
   log "Dispositivo físico detectado!"
+
 else
   # --- Bloco de Erro para opção inválida ---
   echo "Erro: Modo inválido '$MODE'. Use 'emulator' ou 'device'."
+  kill $METRO_PID 2>/dev/null
   exit 1
 fi
 
-# PASSO 7: Configurar o redirecionamento de porta
+# PASSO 6: Configurar o redirecionamento de porta
 log "Configurando 'adb reverse' para a porta 8081..."
 adb reverse tcp:8081 tcp:8081
 
-# PASSO 8: Build e Instalação via Gradle
+# PASSO 7: Build e Instalação via Gradle
 log "Garantindo permissão de execução para o gradlew..."
 chmod +x android/gradlew
 log "Compilando o app com Gradle (assembleDebug)..."
@@ -93,4 +89,8 @@ PACKAGE_NAME="com.signapp"
 log "Iniciando o app ($PACKAGE_NAME) no dispositivo..."
 adb shell am start -n "$PACKAGE_NAME/$PACKAGE_NAME.MainActivity"
 
-log "Setup concluído! O app deve estar iniciando no dispositivo."
+log "Setup concluído! Metro rodando em background (PID: $METRO_PID). O app está iniciando no dispositivo."
+log "Para parar o Metro: kill $METRO_PID"
+
+# Mantém o Metro em foreground
+wait $METRO_PID
