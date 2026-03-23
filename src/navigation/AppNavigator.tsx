@@ -11,6 +11,7 @@ import NotificationScreen from '../screens/app/NotificationScreen';
 import HomeScreen from '../screens/app/HomeScreen';
 import EventosScreen from '../screens/app/Ranking';
 import PerfilScreen from '../screens/app/PerfilScreen';
+import PesquisarScreen from '../screens/app/PesquisarScreen';
 import QuizScreen from '../screens/app/QuizScreen';
 
 import ModuleDetailScreen from '../screens/app/ModuleDetailScreen';
@@ -59,6 +60,8 @@ function MainTabsNavigator() {
           let iconName = 'home';
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Pesquisar') {
+            iconName = focused ? 'search' : 'search-outline';
           } else if (route.name === 'NewPost') {
             iconName = focused ? 'add-circle' : 'add-circle-outline';
             return <Ionicons name={iconName} size={32} color={color} />;
@@ -84,6 +87,9 @@ function MainTabsNavigator() {
           headerRight: () => <NotificationsButton />,
         }}
       />
+
+
+      <Tab.Screen name="Pesquisar" component={PesquisarScreen} options={{ title: 'Pesquisar' }} />
       <Tab.Screen name="NewPost" component={NewPostScreen} options={{ title: 'Novo Post' }} />
       <Tab.Screen name="Eventos" component={EventosScreen} />
       <Tab.Screen name="Perfil" component={PerfilScreen} />
