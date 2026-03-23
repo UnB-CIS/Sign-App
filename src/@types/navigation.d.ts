@@ -11,6 +11,7 @@ export type AuthStackParamList = {
 export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<AppTabParamList>;
   Notifications: undefined;
+  Configuracoes: undefined;
   Progresso: undefined;
   Quiz: {
     lessonId: string;

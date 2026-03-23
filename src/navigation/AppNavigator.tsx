@@ -11,6 +11,7 @@ import NotificationScreen from '../screens/app/NotificationScreen';
 import HomeScreen from '../screens/app/HomeScreen';
 import EventosScreen from '../screens/app/Ranking';
 import PerfilScreen from '../screens/app/PerfilScreen';
+import ConfiguracoesScreen from '../screens/app/ConfiguracoesScreen';
 import ProgressoScreen from '../screens/app/ProgressoScreen';
 import PesquisarScreen from '../screens/app/PesquisarScreen';
 import QuizScreen from '../screens/app/QuizScreen';
@@ -112,6 +113,9 @@ export default function AppNavigator() {
         options={{ title: 'Notificações' }}
       />
       <Stack.Screen
+        name="Configuracoes"
+        component={ConfiguracoesScreen}
+        options={{ title: 'Configurações' }}
         name="Progresso"
         component={ProgressoScreen}
         options={{ title: 'Meu Progresso' }}
