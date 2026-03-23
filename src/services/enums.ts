@@ -4,4 +4,5 @@ export enum Collections {
     LEAGUES = 'leaderboards',
     COURSES = 'courses',
     USERS = 'users',
+    BUGREPORTS = 'bugReports',
 }

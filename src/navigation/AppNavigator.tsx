@@ -4,20 +4,30 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
-
-// @types
+import { Colors } from '../theme';
 import { AppStackParamList, AppTabParamList } from '../@types/navigation';
 
 import NotificationScreen from '../screens/app/NotificationScreen';
-import HomeScreen from '../screens/app/HomeScreen.tsx';
+import HomeScreen from '../screens/app/HomeScreen';
 import EventosScreen from '../screens/app/Ranking';
 import PerfilScreen from '../screens/app/PerfilScreen';
+import ConfiguracoesScreen from '../screens/app/ConfiguracoesScreen';
+import ProgressoScreen from '../screens/app/ProgressoScreen';
+import PesquisarScreen from '../screens/app/PesquisarScreen';
+import QuizScreen from '../screens/app/QuizScreen';
 
+import ModuleDetailScreen from '../screens/app/ModuleDetailScreen';
+import SignTeachingScreen from '../screens/app/SignTeachingScreen';
+import SignRecordingScreen from '../screens/app/SignRecordingScreen';
+import LessonCompleteScreen from '../screens/app/LessonCompleteScreen';
+import EditProfileScreen from '../screens/app/EditProfileScreen';
+import ChangePasswordScreen from '../screens/app/ChangePasswordScreen';
+import BugReportScreen from '../screens/app/BugReportScreen';
 
 function NewPostScreen() {
   return (
     <View style={styles.dummyScreen}>
-      <Text>Tela de Novo Post (Em desenvolvimento)</Text>
+      <Text>Novo Post (Em desenvolvimento)</Text>
     </View>
   );
 }
@@ -41,7 +51,6 @@ function NotificationsButton() {
   );
 }
 
-
 const Stack = createNativeStackNavigator<AppStackParamList>();
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
@@ -53,6 +62,8 @@ function MainTabsNavigator() {
           let iconName = 'home';
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Pesquisar') {
+            iconName = focused ? 'search' : 'search-outline';
           } else if (route.name === 'NewPost') {
             iconName = focused ? 'add-circle' : 'add-circle-outline';
             return <Ionicons name={iconName} size={32} color={color} />;
@@ -63,23 +74,24 @@ function MainTabsNavigator() {
           }
           return <Ionicons name={iconName as string} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#6200EE',
-        tabBarInactiveTintColor: 'gray',
-        tabBarShowLabel: false, // esconde os nomes (Home, Perfil, etc)
+        tabBarActiveTintColor: Colors.tabActive,
+        tabBarInactiveTintColor: Colors.tabInactive,
+        tabBarShowLabel: false,
       })}
     >
       <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          headerTitle: 'Feed', // Título 
+          headerTitle: 'Feed',
           headerTitleAlign: 'center',
           headerLeft: () => <HeaderLogo />,
-          headerRight: () => <NotificationsButton />, // Botão de Notificações
+          headerRight: () => <NotificationsButton />,
         }}
       />
 
 
+      <Tab.Screen name="Pesquisar" component={PesquisarScreen} options={{ title: 'Pesquisar' }} />
       <Tab.Screen name="NewPost" component={NewPostScreen} options={{ title: 'Novo Post' }} />
       <Tab.Screen name="Eventos" component={EventosScreen} />
       <Tab.Screen name="Perfil" component={PerfilScreen} />
@@ -87,19 +99,62 @@ function MainTabsNavigator() {
   );
 }
 
-
 export default function AppNavigator() {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="MainTabs" // contém as abas
+        name="MainTabs"
         component={MainTabsNavigator}
-        options={{ headerShown: false }} // Esconde o header duplicado do Stack
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Notifications"
         component={NotificationScreen}
         options={{ title: 'Notificações' }}
+      />
+      <Stack.Screen
+        name="Configuracoes"
+        component={ConfiguracoesScreen}
+        options={{ title: 'Configurações' }}
+        name="Progresso"
+        component={ProgressoScreen}
+        options={{ title: 'Meu Progresso' }}
+        name="Quiz"
+        component={QuizScreen}
+        options={{ title: 'Quiz' }}
+        name="ModuleDetail"
+        component={ModuleDetailScreen}
+        options={{ title: 'Módulo' }}
+      />
+      <Stack.Screen
+        name="SignTeaching"
+        component={SignTeachingScreen}
+        options={{ title: 'Aprender Sinal' }}
+      />
+      <Stack.Screen
+        name="SignRecording"
+        component={SignRecordingScreen}
+        options={{ title: 'Gravar Sinal' }}
+      />
+      <Stack.Screen
+        name="LessonComplete"
+        component={LessonCompleteScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{ title: 'Editar Perfil' }}
+      />
+      <Stack.Screen
+        name="ChangePassword"
+        component={ChangePasswordScreen}
+        options={{ title: 'Alterar Senha' }}
+      />
+      <Stack.Screen
+        name="BugReport"
+        component={BugReportScreen}
+        options={{ title: 'Reportar Bug' }}
       />
     </Stack.Navigator>
   );
@@ -117,4 +172,3 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
 });
-
