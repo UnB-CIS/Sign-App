@@ -6,22 +6,19 @@ import SplashScreen from './src/screens/SplashScreen';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import AppNavigator from './src/navigation/AppNavigator';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-// @types
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './src/services/firebase';
 import { AuthStackParamList, AppStackParamList } from './src/@types/navigation';
+
 type RootStackParamList = AuthStackParamList & AppStackParamList;
-
-
 
 const linkingConfig: LinkingOptions<RootStackParamList> = {
   prefixes: ['sign://'],
   config: {
-    // mapeando os links das telas
     screens: {
-      // AuthNavigator (AuthStackParamList)
       Register: 'register',
       Login: 'login',
-
-      // AppNavigator (AppStackParamList)
+      ForgotPassword: 'forgot-password',
       MainTabs: {
         screens: {
           Home: 'home',
@@ -35,37 +32,37 @@ const linkingConfig: LinkingOptions<RootStackParamList> = {
 };
 
 function RootNavigator() {
-  const { token, isLoading: isAuthLoading } = useAuth();
+  const { token, signIn, signOut } = useAuth();
   const [isAppLoading, setIsAppLoading] = useState(true);
-
+  const [firebaseUser, setFirebaseUser] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setTimeout(() => {
-      setIsAppLoading(false);
-      // react-native-splash-screen (nativo) o .hide() aqui
-    }, 1500);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(!!user);
+      if (user) {
+        signIn(user.uid);
+      } else {
+        signOut();
+      }
+    });
+    return unsubscribe;
   }, []);
 
+  useEffect(() => {
+    setTimeout(() => setIsAppLoading(false), 1500);
+  }, []);
 
-  if (isAppLoading || isAuthLoading) {
+  if (isAppLoading || firebaseUser === null) {
     return <SplashScreen />;
   }
 
-  // <></> (Fragmento) necessário
-  return (
-    <>
-
-
-      <AppNavigator />
-    </>
-  );
+  return firebaseUser ? <AppNavigator /> : <AuthNavigator />;
 }
 
-
-export default function App() { // o AuthProvider envolve tudo pois passa diretamente o estado do usuário para todos os componentes dentro
+export default function App() {
   return (
     <AuthProvider>
-      <NavigationContainer<RootStackParamList> // após isso vem o de navegação
+      <NavigationContainer<RootStackParamList>
         linking={linkingConfig}
         fallback={
           <View style={styles.loading}>
@@ -86,4 +83,3 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
-
