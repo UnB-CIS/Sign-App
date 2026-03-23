@@ -53,6 +53,10 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
 
       <Button title="Entrar" onPress={handleLogin} />
 
+      <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+        <Text style={styles.linkText}>Esqueceu sua senha?</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity onPress={() => navigation.navigate('Register')}>
         <Text style={styles.linkText}>Ainda não possui uma conta? Fazer Cadastro</Text>
       </TouchableOpacity>
