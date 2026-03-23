@@ -1,10 +1,12 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, FlatList } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, Image, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import HorizontalMenu from '../../components/HorizontalMenu';
+import { Colors, Spacing, FontSize, BorderRadius } from '../../theme';
+import { auth } from '../../services/firebase';
 
-// 1. Mock Data
-const PLAYERS = [
+const MOCK_PLAYERS = [
   { id: '1', name: 'Antonio Lima', score: 12597, avatar: 'https://i.pravatar.cc/150?u=1', rank: 1 },
   { id: '2', name: 'Fernanda Araujo', score: 12001, avatar: 'https://i.pravatar.cc/150?u=2', rank: 2 },
   { id: '3', name: 'Valdilene Carvalho', score: 11123, avatar: 'https://i.pravatar.cc/150?u=3', rank: 3 },
@@ -15,55 +17,69 @@ const PLAYERS = [
   { id: '8', name: 'Rafael Pereira', score: 2688, avatar: 'https://i.pravatar.cc/150?u=8', rank: 8 },
 ];
 
-// 2. Podium Item Component (Top 3)
-const PodiumItem = ({ item, size }) => {
-  const isFirst = item.rank === 1;
-  const isSecond = item.rank === 2;
-  const isThird = item.rank === 3;
+const FILTER_OPTIONS = ['Pontos', 'Ofensiva', 'Progresso'];
 
-  // Dynamic styles based on rank
-  const barHeight = isFirst ? 140 : isSecond ? 100 : 80;
-  const barColor = '#7F00FF'; // Purple
+interface Player {
+  id: string;
+  name: string;
+  score: number;
+  avatar: string;
+  rank: number;
+}
+
+function PodiumItem({ item }: { item: Player }) {
+  const isFirst = item.rank === 1;
+  const barHeight = isFirst ? 140 : item.rank === 2 ? 100 : 80;
   const iconName = isFirst ? 'trophy' : 'medal';
 
   return (
     <View style={styles.podiumContainer}>
-      {/* Avatar Group */}
       <View style={styles.avatarContainer}>
-        <View style={[styles.avatarBorder, { borderColor: isFirst ? '#FFD700' : '#E0E0E0' }]}>
+        <View style={[styles.avatarBorder, { borderColor: isFirst ? Colors.gold : Colors.border }]}>
           <Image source={{ uri: item.avatar }} style={styles.podiumAvatar} />
         </View>
         <View style={styles.badge}>
           <Text style={styles.badgeText} numberOfLines={1}>{item.name}</Text>
         </View>
       </View>
-
-      {/* Purple Bar */}
-      <View style={[styles.bar, { height: barHeight, backgroundColor: barColor }]}>
+      <View style={[styles.bar, { height: barHeight, backgroundColor: Colors.podium }]}>
         <MaterialCommunityIcons name={iconName} size={30} color="white" />
         <Text style={styles.rankNumber}>{item.rank}</Text>
       </View>
-
-      {/* Score */}
       <Text style={styles.podiumScore}>{item.score}</Text>
     </View>
   );
-};
+}
 
-// 3. List Item Component (Rank 4+)
-const ListItem = ({ item }) => (
-  <View style={styles.card}>
-    <Text style={styles.rankText}>{item.rank}</Text>
-    <Image source={{ uri: item.avatar }} style={styles.listAvatar} />
-    <Text style={styles.listName}>{item.name}</Text>
-    <Text style={styles.listScore}>{item.score}</Text>
-  </View>
-);
+function ListItem({ item, isCurrentUser }: { item: Player; isCurrentUser: boolean }) {
+  return (
+    <View style={[styles.card, isCurrentUser && styles.cardHighlighted]}>
+      <Text style={styles.rankText}>{item.rank}</Text>
+      <Image source={{ uri: item.avatar }} style={styles.listAvatar} />
+      <Text style={[styles.listName, isCurrentUser && styles.listNameHighlighted]}>
+        {item.name}{isCurrentUser ? ' (Você)' : ''}
+      </Text>
+      <Text style={styles.listScore}>{item.score}</Text>
+    </View>
+  );
+}
 
-export default function EventosScreen() {
-  // Sort data so top 3 are extracted correctly
-  const topThree = [PLAYERS[1], PLAYERS[0], PLAYERS[2]]; // Order: 2nd, 1st, 3rd (Visual layout)
-  const restOfList = PLAYERS.slice(3);
+export default function RankingScreen() {
+  const [filter, setFilter] = useState(FILTER_OPTIONS[0]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [players, setPlayers] = useState(MOCK_PLAYERS);
+  const currentUserId = auth.currentUser?.uid;
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setPlayers(MOCK_PLAYERS);
+      setRefreshing(false);
+    }, 1000);
+  }, []);
+
+  const topThree = [players[1], players[0], players[2]];
+  const restOfList = players.slice(3);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -71,12 +87,18 @@ export default function EventosScreen() {
         <Text style={styles.headerTitle}>Ranking</Text>
       </View>
 
+      <HorizontalMenu items={FILTER_OPTIONS} selected={filter} onSelect={setFilter} />
+
       <FlatList
         data={restOfList}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ListItem item={item} />}
+        renderItem={({ item }) => (
+          <ListItem item={item} isCurrentUser={item.id === currentUserId} />
+        )}
         contentContainerStyle={styles.listContent}
-        // The Header contains the Podium
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
+        }
         ListHeaderComponent={() => (
           <View style={styles.podiumWrapper}>
             {topThree.map((player) => (
@@ -92,41 +114,40 @@ export default function EventosScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: FontSize.xxxl,
     fontWeight: 'bold',
-    color: '#2B4CDE', // Blue title
+    color: Colors.accent,
   },
-  // Podium Styles
   podiumWrapper: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-end',
-    marginTop: 20,
-    marginBottom: 40,
-    paddingHorizontal: 10,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.xxxl,
+    paddingHorizontal: Spacing.sm,
   },
   podiumContainer: {
     alignItems: 'center',
-    marginHorizontal: 8,
+    marginHorizontal: Spacing.sm,
     width: 90,
   },
   avatarContainer: {
     alignItems: 'center',
-    marginBottom: -15, // Pull avatar down slightly over bar
+    marginBottom: -15,
     zIndex: 1,
   },
   avatarBorder: {
     borderWidth: 3,
     borderRadius: 40,
     padding: 2,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background,
   },
   podiumAvatar: {
     width: 60,
@@ -134,7 +155,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
   },
   badge: {
-    backgroundColor: '#1E3A8A', // Dark blue badge
+    backgroundColor: '#1E3A8A',
     paddingVertical: 2,
     paddingHorizontal: 8,
     borderRadius: 10,
@@ -142,50 +163,51 @@ const styles = StyleSheet.create({
     maxWidth: 85,
   },
   badgeText: {
-    color: '#fff',
-    fontSize: 10,
+    color: Colors.textOnPrimary,
+    fontSize: FontSize.xs,
     fontWeight: 'bold',
   },
   bar: {
     width: '100%',
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    borderBottomLeftRadius: 10, // Added rounded bottom for floating effect
-    borderBottomRightRadius: 10,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 10,
   },
   rankNumber: {
-    color: '#fff',
+    color: Colors.textOnPrimary,
     fontSize: 40,
     fontWeight: 'bold',
   },
   podiumScore: {
-    color: '#2B4CDE',
+    color: Colors.accent,
     fontWeight: 'bold',
     marginTop: 5,
-    fontSize: 16,
+    fontSize: FontSize.base,
   },
-  // List Styles
   listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 15,
-    marginBottom: 10,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.base,
+    marginBottom: Spacing.sm,
     borderWidth: 1,
-    borderColor: '#6C9EFF', // Light blue border
+    borderColor: Colors.borderAccent,
+  },
+  cardHighlighted: {
+    backgroundColor: '#EEF2FF',
+    borderColor: Colors.primary,
+    borderWidth: 2,
   },
   rankText: {
-    fontSize: 18,
+    fontSize: FontSize.lg,
     fontWeight: 'bold',
-    color: '#9CA3AF',
+    color: Colors.textLight,
     width: 30,
     textAlign: 'center',
   },
@@ -193,15 +215,19 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    marginHorizontal: 15,
+    marginHorizontal: Spacing.base,
   },
   listName: {
     flex: 1,
-    fontSize: 16,
+    fontSize: FontSize.base,
     color: '#4B5563',
   },
+  listNameHighlighted: {
+    fontWeight: 'bold',
+    color: Colors.primary,
+  },
   listScore: {
-    fontSize: 16,
+    fontSize: FontSize.base,
     fontWeight: 'bold',
     color: '#5476FF',
   },
