@@ -3,9 +3,9 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NavigatorScreenParams } from '@react-navigation/native';
 
 export type AuthStackParamList = {
+  Onboarding: undefined;
   Login: undefined;
   Register: undefined;
-  ForgotPassword: undefined;
 };
 
 export type AppStackParamList = {
