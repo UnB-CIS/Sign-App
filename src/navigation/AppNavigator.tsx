@@ -11,6 +11,8 @@ import NotificationScreen from '../screens/app/NotificationScreen';
 import HomeScreen from '../screens/app/HomeScreen';
 import EventosScreen from '../screens/app/Ranking';
 import PerfilScreen from '../screens/app/PerfilScreen';
+import QuizScreen from '../screens/app/QuizScreen';
+
 import ModuleDetailScreen from '../screens/app/ModuleDetailScreen';
 import SignTeachingScreen from '../screens/app/SignTeachingScreen';
 import SignRecordingScreen from '../screens/app/SignRecordingScreen';
@@ -103,6 +105,9 @@ export default function AppNavigator() {
         options={{ title: 'Notificações' }}
       />
       <Stack.Screen
+        name="Quiz"
+        component={QuizScreen}
+        options={{ title: 'Quiz' }}
         name="ModuleDetail"
         component={ModuleDetailScreen}
         options={{ title: 'Módulo' }}

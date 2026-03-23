@@ -11,6 +11,17 @@ export type AuthStackParamList = {
 export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<AppTabParamList>;
   Notifications: undefined;
+  Quiz: {
+    lessonId: string;
+    moduleId: string;
+    questions: {
+      id: string;
+      prompt: string;
+      options?: string[];
+      correctAnswer?: string;
+      type: string;
+    }[];
+  };
   ModuleDetail: { moduleId: string };
   SignTeaching: { lessonId: string; moduleId: string };
   SignRecording: { lessonId: string; questionId: string };
