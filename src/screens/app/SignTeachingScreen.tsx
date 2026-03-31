@@ -35,7 +35,12 @@ export default function SignTeachingScreen() {
         .flatMap((a) => a.questions)
         .find((q) => q.type === 'video_record');
       if (videoQ) {
-        navigation.navigate('SignRecording', { lessonId, questionId: videoQ.id });
+        navigation.navigate('SignRecording', {
+          lessonId,
+          questionId: videoQ.id,
+          moduleId,
+          xpEarned: lesson.xpReward,
+        });
         return;
       }
     }

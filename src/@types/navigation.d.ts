@@ -26,7 +26,7 @@ export type AppStackParamList = {
   };
   ModuleDetail: { moduleId: string };
   SignTeaching: { lessonId: string; moduleId: string };
-  SignRecording: { lessonId: string; questionId: string };
+  SignRecording: { lessonId: string; questionId: string; moduleId: string; xpEarned: number };
   LessonComplete: { lessonId: string; moduleId: string; score: number; xpEarned: number };
   EditProfile: undefined;
   ChangePassword: undefined;

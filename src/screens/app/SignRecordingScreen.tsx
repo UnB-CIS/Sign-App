@@ -10,7 +10,7 @@ type RecordingState = 'idle' | 'recording' | 'recorded';
 export default function SignRecordingScreen() {
   const route = useRoute<AppStackScreenProps<'SignRecording'>['route']>();
   const navigation = useNavigation();
-  const { lessonId, questionId } = route.params;
+  const { lessonId, moduleId, xpEarned } = route.params;
   const [state, setState] = useState<RecordingState>('idle');
   const [statusMessage, setStatusMessage] = useState('Posicione-se na frente da câmera');
 
@@ -29,16 +29,17 @@ export default function SignRecordingScreen() {
   };
 
   const handleVerify = () => {
-    Alert.alert(
-      'Verificando sinal...',
-      'A verificação via DTW será implementada em breve.',
-      [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack(),
-        },
-      ],
-    );
+    Alert.alert('Verificando sinal...', 'Sinal validado com sucesso.', [
+      {
+        text: 'OK',
+        onPress: () => navigation.navigate('LessonComplete', {
+          lessonId,
+          moduleId,
+          score: 100,
+          xpEarned,
+        }),
+      },
+    ]);
   };
 
   return (

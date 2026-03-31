@@ -1,17 +1,42 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { MODULES } from '../../data/modules';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../theme';
 import type { AppStackScreenProps } from '../../@types/navigation';
+import { auth } from '../../services/firebase';
+import { getModuleLessonProgress } from '../../services/models/userProgress';
 
 export default function ModuleDetailScreen() {
   const route = useRoute<AppStackScreenProps<'ModuleDetail'>['route']>();
   const navigation = useNavigation();
   const { moduleId } = route.params;
+  const [lessonStatus, setLessonStatus] = useState<Record<string, { completed: boolean; locked: boolean }>>({});
 
   const mod = MODULES.find((m) => m.id === moduleId);
+
+  useFocusEffect(
+    useCallback(() => {
+      const uid = auth.currentUser?.uid;
+
+      if (!uid) {
+        setLessonStatus({});
+        return;
+      }
+
+      getModuleLessonProgress(uid, moduleId)
+        .then((items) => {
+          setLessonStatus(
+            Object.fromEntries(items.map((item) => [item.lessonId, { completed: item.completed, locked: item.locked }]))
+          );
+        })
+        .catch((error) => {
+          console.error(error);
+          setLessonStatus({});
+        });
+    }, [moduleId])
+  );
 
   if (!mod) {
     return (
@@ -38,7 +63,8 @@ export default function ModuleDetailScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
           <TouchableOpacity
-            style={styles.lessonCard}
+            style={[styles.lessonCard, lessonStatus[item.id]?.locked && styles.lessonCardLocked]}
+            disabled={lessonStatus[item.id]?.locked}
             onPress={() =>
               navigation.navigate('SignTeaching', { lessonId: item.id, moduleId: mod.id })
             }
@@ -51,7 +77,13 @@ export default function ModuleDetailScreen() {
               <Text style={styles.lessonDesc}>{item.description}</Text>
               <Text style={styles.xpText}>{item.xpReward} XP</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
+            {lessonStatus[item.id]?.completed ? (
+              <Ionicons name="checkmark-circle" size={22} color={Colors.success} />
+            ) : lessonStatus[item.id]?.locked ? (
+              <Ionicons name="lock-closed" size={20} color={Colors.textLight} />
+            ) : (
+              <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
+            )}
           </TouchableOpacity>
         )}
         showsVerticalScrollIndicator={false}
@@ -106,6 +138,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     padding: Spacing.base,
     marginBottom: Spacing.md,
+  },
+  lessonCardLocked: {
+    opacity: 0.5,
   },
   lessonNumber: {
     width: 36,

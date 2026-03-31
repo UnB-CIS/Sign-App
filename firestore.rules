@@ -1,0 +1,53 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow create: if isOwner(userId)
+        && request.resource.data._id == request.auth.uid
+        && request.resource.data.username is string
+        && request.resource.data.username.size() > 0
+        && request.resource.data.email is string;
+
+      allow read: if isOwner(userId);
+
+      allow update: if isOwner(userId);
+    }
+
+    match /bugReports/{bugId} {
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.type is string
+        && request.resource.data.description is string
+        && request.resource.data.description.size() > 0
+        && (!('imageUrls' in request.resource.data) || request.resource.data.imageUrls is list);
+
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /progress/{progressId} {
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /courses/{courseId} {
+      allow read: if isSignedIn();
+    }
+
+    match /lessons/{lessonId} {
+      allow read: if isSignedIn();
+    }
+
+    match /leaderboards/{leaderboardId} {
+      allow read: if isSignedIn();
+    }
+  }
+}

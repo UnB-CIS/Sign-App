@@ -32,7 +32,7 @@ const linkingConfig: LinkingOptions<RootStackParamList> = {
 };
 
 function RootNavigator() {
-  const { token, signIn, signOut } = useAuth();
+  const { signIn, signOut } = useAuth();
   const [isAppLoading, setIsAppLoading] = useState(true);
   const [firebaseUser, setFirebaseUser] = useState<boolean | null>(null);
 
@@ -46,7 +46,7 @@ function RootNavigator() {
       }
     });
     return unsubscribe;
-  }, []);
+  }, [signIn, signOut]);
 
   useEffect(() => {
     setTimeout(() => setIsAppLoading(false), 1500);

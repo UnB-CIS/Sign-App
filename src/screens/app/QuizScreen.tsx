@@ -48,12 +48,13 @@ export default function QuizScreen() {
 
   const handleNext = () => {
     if (isLast) {
-      const finalScore = Math.round(((score + (isCorrect ? 0 : 0)) / questions.length) * 100);
+      const correctAnswers = score;
+      const finalScore = Math.round((correctAnswers / questions.length) * 100);
       navigation.navigate('LessonComplete' as never, {
         lessonId,
         moduleId,
         score: finalScore,
-        xpEarned: score * 20,
+        xpEarned: correctAnswers * 20,
       } as never);
       return;
     }

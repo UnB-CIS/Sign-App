@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { MODULES } from '../../data/modules';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../theme';
-import type { Module } from '../../data/types';
+import { auth } from '../../services/firebase';
+import { getCurrentUserById } from '../../services/models/user';
+import { getCourseModulesOverview, ModuleOverview } from '../../services/models/courseOverview';
 
 interface CourseCardProps {
   title: string;
@@ -52,19 +53,41 @@ function CourseCard({ title, progress, locked, onPress }: CourseCardProps) {
 }
 
 export default function HomeScreen() {
-  const [modules, setModules] = useState<(Module & { progress: number; locked: boolean })[]>([]);
+  const [modules, setModules] = useState<ModuleOverview[]>([]);
   const [streak, setStreak] = useState(0);
   const navigation = useNavigation();
 
   useEffect(() => {
-    const mapped = MODULES.map((mod, index) => ({
-      ...mod,
-      progress: index === 0 ? 75 : index === 1 ? 30 : 0,
-      locked: index > 2,
-    }));
-    setModules(mapped);
-    setStreak(5);
+    setModules([]);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const uid = auth.currentUser?.uid;
+
+      if (!uid) {
+        setStreak(0);
+        setModules([]);
+        return;
+      }
+
+      getCourseModulesOverview(uid)
+        .then(setModules)
+        .catch((error) => {
+          console.error(error);
+          setModules([]);
+        });
+
+      getCurrentUserById(uid)
+        .then((profile) => {
+          setStreak(profile?.streak?.current ?? 0);
+        })
+        .catch((error) => {
+          console.error(error);
+          setStreak(0);
+        });
+    }, [])
+  );
 
   const handleCardPress = (moduleId: string) => {
     navigation.navigate('ModuleDetail', { moduleId });

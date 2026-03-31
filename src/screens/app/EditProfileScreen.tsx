@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View,
   Text,
   TextInput,
   StyleSheet,
   TouchableOpacity,
+  View,
   Alert,
   ActivityIndicator,
   ScrollView,
@@ -16,12 +16,54 @@ import { auth } from '../../services/firebase';
 import { getCurrentUserById, updateUserProfile } from '../../services/models/user';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../theme';
 
+const BIRTH_DATE_REGEX = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
+const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro'] as const;
+
+function formatPhone(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+
+  if (!digits) return '';
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function formatBirthDate(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function isValidBirthDate(value: string) {
+  if (!BIRTH_DATE_REGEX.test(value)) return false;
+
+  const [day, month, year] = value.split('/').map(Number);
+  const date = new Date(year, month - 1, day);
+  const now = new Date();
+
+  return (
+    date.getFullYear() === year
+    && date.getMonth() === month - 1
+    && date.getDate() === day
+    && year >= 1900
+    && date <= now
+  );
+}
+
 export default function EditProfileScreen() {
   const navigation = useNavigation();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [gender, setGender] = useState('');
-  const [dob, setDob] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [isGenderSelectOpen, setIsGenderSelectOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -30,25 +72,63 @@ export default function EditProfileScreen() {
       getCurrentUserById(uid).then((profile) => {
         if (profile) {
           setName(profile.name || '');
+          setPhone(formatPhone(profile.phone || ''));
+          setGender(profile.gender || '');
+          setBirthDate(formatBirthDate(profile.birth_date || ''));
         }
-      });
+      }).catch(console.error);
     }
   }, []);
 
   const handleSave = async () => {
     const uid = auth.currentUser?.uid;
-    if (!uid) return;
+    if (!uid) {
+      Alert.alert('Erro', 'Você precisa estar logado.');
+      return;
+    }
+
+    const trimmedName = name.trim();
+    const trimmedPhone = phone.trim();
+    const trimmedGender = gender.trim();
+    const trimmedBirthDate = birthDate.trim();
+
+    if (!trimmedName) {
+      Alert.alert('Erro', 'Preencha seu nome completo.');
+      return;
+    }
+
+    if (trimmedPhone) {
+      const digits = trimmedPhone.replace(/\D/g, '');
+      if (digits.length < 10 || digits.length > 11) {
+        Alert.alert('Erro', 'Informe um telefone com 10 ou 11 dígitos.');
+        return;
+      }
+    }
+
+    if (trimmedGender && trimmedGender.length < 2) {
+      Alert.alert('Erro', 'Informe um gênero válido.');
+      return;
+    }
+
+    if (trimmedBirthDate && !isValidBirthDate(trimmedBirthDate)) {
+      Alert.alert('Erro', 'Informe a data de nascimento no formato DD/MM/AAAA.');
+      return;
+    }
 
     setLoading(true);
     try {
       await updateUserProfile(uid, {
-        name: name.trim(),
+        name: trimmedName,
+        phone: trimmedPhone,
+        gender: trimmedGender,
+        birth_date: trimmedBirthDate,
       });
       Alert.alert('Sucesso', 'Perfil atualizado!', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível atualizar o perfil.');
+      const message = error instanceof Error ? error.message : 'Não foi possível atualizar o perfil.';
+      Alert.alert('Erro', message);
     } finally {
       setLoading(false);
     }
@@ -66,32 +146,65 @@ export default function EditProfileScreen() {
           value={name}
           onChangeText={setName}
           placeholder="Seu nome"
+          autoCapitalize="words"
         />
 
         <Text style={styles.label}>Telefone</Text>
         <TextInput
           style={styles.input}
           value={phone}
-          onChangeText={setPhone}
+          onChangeText={(value) => setPhone(formatPhone(value))}
           placeholder="(00) 00000-0000"
           keyboardType="phone-pad"
         />
 
         <Text style={styles.label}>Gênero</Text>
-        <TextInput
-          style={styles.input}
-          value={gender}
-          onChangeText={setGender}
-          placeholder="Masculino / Feminino / Outro"
-        />
+        <TouchableOpacity
+          style={[styles.input, styles.selectInput, isGenderSelectOpen && styles.selectInputOpen]}
+          onPress={() => setIsGenderSelectOpen((current) => !current)}
+          activeOpacity={0.8}
+        >
+          <Text style={gender ? styles.selectValue : styles.selectPlaceholder}>
+            {gender || 'Selecione uma opção'}
+          </Text>
+          <Text style={styles.selectChevron}>{isGenderSelectOpen ? '▲' : '▼'}</Text>
+        </TouchableOpacity>
+        {isGenderSelectOpen ? (
+          <View style={styles.selectMenu}>
+            {GENDER_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option}
+                style={[
+                  styles.selectOption,
+                  gender === option && styles.selectOptionSelected,
+                ]}
+                onPress={() => {
+                  setGender(option);
+                  setIsGenderSelectOpen(false);
+                }}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.selectOptionText,
+                    gender === option && styles.selectOptionTextSelected,
+                  ]}
+                >
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
 
         <Text style={styles.label}>Data de Nascimento</Text>
         <TextInput
           style={styles.input}
-          value={dob}
-          onChangeText={setDob}
+          value={birthDate}
+          onChangeText={(value) => setBirthDate(formatBirthDate(value))}
           placeholder="DD/MM/AAAA"
           keyboardType="numeric"
+          maxLength={10}
         />
 
         <TouchableOpacity
@@ -131,6 +244,52 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.base,
     fontSize: FontSize.base,
     backgroundColor: Colors.background,
+  },
+  selectInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectInputOpen: {
+    borderColor: Colors.borderAccent,
+  },
+  selectValue: {
+    color: Colors.text,
+    fontSize: FontSize.base,
+  },
+  selectPlaceholder: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.base,
+  },
+  selectChevron: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.sm,
+  },
+  selectMenu: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.card,
+    marginTop: -Spacing.xs,
+    marginBottom: Spacing.base,
+    overflow: 'hidden',
+  },
+  selectOption: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  selectOptionSelected: {
+    backgroundColor: Colors.surface,
+  },
+  selectOptionText: {
+    color: Colors.text,
+    fontSize: FontSize.base,
+  },
+  selectOptionTextSelected: {
+    color: Colors.accent,
+    fontWeight: '600',
   },
   button: {
     width: '100%',

@@ -17,6 +17,24 @@ import { isUserAuthenticated } from '../../services/auth';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
+function getLoginErrorMessage(error: unknown) {
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error
+      ? String((error as { code?: string }).code)
+      : '';
+
+  if (
+    code === 'auth/invalid-credential'
+    || code === 'auth/wrong-password'
+    || code === 'auth/user-not-found'
+    || code === 'auth/invalid-email'
+  ) {
+    return 'Email ou senha inválidos.';
+  }
+
+  return 'Não foi possível realizar o login. Tente novamente.';
+}
+
 export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,7 +54,7 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
         Alert.alert('Erro no Login', 'Não foi possível realizar o login.');
       }
     } catch (error) {
-      Alert.alert('Erro no Login', 'Email ou senha inválidos.');
+      Alert.alert('Erro no Login', getLoginErrorMessage(error));
     } finally {
       setLoading(false);
     }

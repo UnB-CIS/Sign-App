@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth, initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 // Try to load android google-services.json (you already added it at android/app/google-services.json)
@@ -28,5 +29,13 @@ try {
 }
 
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+export const auth = (() => {
+    try {
+        return initializeAuth(app, {
+            persistence: getReactNativePersistence(AsyncStorage),
+        });
+    } catch (_error) {
+        return getAuth(app);
+    }
+})();
 export const db = getFirestore(app);

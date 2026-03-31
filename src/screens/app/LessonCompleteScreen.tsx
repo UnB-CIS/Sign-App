@@ -1,14 +1,41 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../theme';
 import type { AppStackScreenProps } from '../../@types/navigation';
+import { auth } from '../../services/firebase';
+import { completeLessonProgress } from '../../services/models/userProgress';
 
 export default function LessonCompleteScreen() {
   const route = useRoute<AppStackScreenProps<'LessonComplete'>['route']>();
   const navigation = useNavigation();
-  const { score, xpEarned } = route.params;
+  const { lessonId, moduleId, score, xpEarned } = route.params;
+  const [saving, setSaving] = useState(true);
+
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+
+    if (!uid) {
+      setSaving(false);
+      return;
+    }
+
+    completeLessonProgress({
+      userId: uid,
+      lessonId,
+      moduleId,
+      score,
+      xpEarned,
+    })
+      .catch((error) => {
+        console.error(error);
+        Alert.alert('Erro', 'Não foi possível salvar o progresso da lição.');
+      })
+      .finally(() => {
+        setSaving(false);
+      });
+  }, [lessonId, moduleId, score, xpEarned]);
 
   return (
     <View style={styles.container}>
@@ -28,10 +55,15 @@ export default function LessonCompleteScreen() {
       </View>
 
       <TouchableOpacity
-        style={styles.button}
+        style={[styles.button, saving && styles.buttonDisabled]}
+        disabled={saving}
         onPress={() => navigation.navigate('MainTabs', { screen: 'Home' })}
       >
-        <Text style={styles.buttonText}>Voltar aos Módulos</Text>
+        {saving ? (
+          <ActivityIndicator color={Colors.textOnPrimary} />
+        ) : (
+          <Text style={styles.buttonText}>Voltar aos Módulos</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -82,6 +114,9 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   buttonText: {
     color: Colors.textOnPrimary,

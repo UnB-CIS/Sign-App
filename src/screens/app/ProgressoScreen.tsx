@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,25 +6,17 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { auth } from '../../services/firebase';
+import { getCurrentUserById, UserProfile } from '../../services/models/user';
+import { getCourseModulesOverview, ModuleOverview } from '../../services/models/courseOverview';
 
-const STATS = {
-  xpTotal: 450,
-  ofensiva: 7,
+const STATIC_STATS = {
   licoesCompletas: 5,
   precisao: 82,
   tempoEstudo: '3h 20min',
 };
-
-const MODULOS_PROGRESSO = [
-  { id: '1', titulo: 'Saudações', progresso: 100, total: 2, completas: 2 },
-  { id: '2', titulo: 'Alimentos', progresso: 50, total: 2, completas: 1 },
-  { id: '3', titulo: 'Números', progresso: 0, total: 1, completas: 0 },
-  { id: '4', titulo: 'Família', progresso: 0, total: 1, completas: 0 },
-  { id: '5', titulo: 'Cores', progresso: 0, total: 1, completas: 0 },
-  { id: '6', titulo: 'Dias e Tempo', progresso: 0, total: 1, completas: 0 },
-  { id: '7', titulo: 'Verbos Cotidianos', progresso: 0, total: 1, completas: 0 },
-];
 
 const SEMANA = [
   { dia: 'Seg', xp: 80 },
@@ -48,8 +40,51 @@ function StatCard({ icon, valor, label, cor }: { icon: string; valor: string; la
   );
 }
 
+function getWeeklyBarStyle(xp: number, maxXp: number) {
+  return {
+    height: `${(xp / maxXp) * 100}%` as `${number}%`,
+    backgroundColor: xp > 0 ? '#2D4CC8' : '#F0F2F5',
+  };
+}
+
 export default function ProgressoScreen() {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [modules, setModules] = useState<ModuleOverview[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const uid = auth.currentUser?.uid;
+
+      if (!uid) {
+        setProfile(null);
+        setModules([]);
+        return;
+      }
+
+      getCourseModulesOverview(uid)
+        .then(setModules)
+        .catch((error) => {
+          console.error(error);
+          setModules([]);
+        });
+
+      getCurrentUserById(uid)
+        .then(setProfile)
+        .catch((error) => {
+          console.error(error);
+          setProfile(null);
+        });
+    }, [])
+  );
+
   const maxXp = Math.max(...SEMANA.map((d) => d.xp), 1);
+  const stats = useMemo(() => ({
+    xpTotal: profile?.xp ?? 0,
+    ofensiva: profile?.streak?.current ?? 0,
+    licoesCompletas: STATIC_STATS.licoesCompletas,
+    precisao: STATIC_STATS.precisao,
+    tempoEstudo: STATIC_STATS.tempoEstudo,
+  }), [profile]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -57,10 +92,10 @@ export default function ProgressoScreen() {
         <Text style={styles.titulo}>Meu Progresso</Text>
 
         <View style={styles.statsGrid}>
-          <StatCard icon="flash" valor={`${STATS.xpTotal}`} label="XP Total" cor="#6200EE" />
-          <StatCard icon="flame" valor={`${STATS.ofensiva} dias`} label="Ofensiva" cor="#FF6B00" />
-          <StatCard icon="checkmark-circle" valor={`${STATS.licoesCompletas}`} label="Lições" cor="#00C853" />
-          <StatCard icon="analytics" valor={`${STATS.precisao}%`} label="Precisão" cor="#2D4CC8" />
+          <StatCard icon="flash" valor={`${stats.xpTotal}`} label="XP Total" cor="#6200EE" />
+          <StatCard icon="flame" valor={`${stats.ofensiva} dias`} label="Ofensiva" cor="#FF6B00" />
+          <StatCard icon="checkmark-circle" valor={`${stats.licoesCompletas}`} label="Lições" cor="#00C853" />
+          <StatCard icon="analytics" valor={`${stats.precisao}%`} label="Precisão" cor="#2D4CC8" />
         </View>
 
         <View style={styles.secao}>
@@ -70,13 +105,7 @@ export default function ProgressoScreen() {
               <View key={dia.dia} style={styles.barraContainer}>
                 <View style={styles.barraFundo}>
                   <View
-                    style={[
-                      styles.barraPreenchida,
-                      {
-                        height: `${(dia.xp / maxXp) * 100}%`,
-                        backgroundColor: dia.xp > 0 ? '#2D4CC8' : '#F0F2F5',
-                      },
-                    ]}
+                    style={[styles.barraPreenchida, getWeeklyBarStyle(dia.xp, maxXp)]}
                   />
                 </View>
                 <Text style={styles.barraDia}>{dia.dia}</Text>
@@ -88,17 +117,17 @@ export default function ProgressoScreen() {
 
         <View style={styles.secao}>
           <Text style={styles.secaoTitulo}>Progresso por Módulo</Text>
-          {MODULOS_PROGRESSO.map((modulo) => (
+          {modules.map((modulo) => (
             <View key={modulo.id} style={styles.moduloItem}>
               <View style={styles.moduloHeader}>
-                <Text style={styles.moduloTitulo}>{modulo.titulo}</Text>
+                <Text style={styles.moduloTitulo}>{modulo.title}</Text>
                 <Text style={styles.moduloInfo}>
-                  {modulo.completas}/{modulo.total} lições
+                  {modulo.completedLessons}/{modulo.totalLessons} lições
                 </Text>
               </View>
               <View style={styles.progressTrack}>
                 <View
-                  style={[styles.progressFill, { width: `${modulo.progresso}%` }]}
+                  style={[styles.progressFill, { width: `${modulo.progress}%` }]}
                 />
               </View>
             </View>
@@ -109,7 +138,7 @@ export default function ProgressoScreen() {
           <Text style={styles.secaoTitulo}>Tempo de Estudo</Text>
           <View style={styles.tempoCard}>
             <Ionicons name="time" size={28} color="#2D4CC8" />
-            <Text style={styles.tempoValor}>{STATS.tempoEstudo}</Text>
+            <Text style={styles.tempoValor}>{stats.tempoEstudo}</Text>
             <Text style={styles.tempoLabel}>esta semana</Text>
           </View>
         </View>
