@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { auth } from '../../../services/firebase';
 import { getCurrentUserById, updateUserProfile } from '../../../services/models/user';
 import EditProfileScreen from '../EditProfileScreen';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: jest.fn(),
@@ -21,11 +22,20 @@ jest.mock('../../../services/models/user', () => ({
   updateUserProfile: jest.fn(),
 }));
 
+jest.mock('../../../services/storage', () => ({
+  validateImageAsset: jest.fn(),
+}));
+
+jest.mock('react-native-image-picker', () => ({
+  launchImageLibrary: jest.fn(),
+}));
+
 describe('EditProfileScreen', () => {
   const mockGoBack = jest.fn();
   const mockedUseNavigation = useNavigation as jest.MockedFunction<typeof useNavigation>;
   const mockedGetCurrentUserById = getCurrentUserById as jest.MockedFunction<typeof getCurrentUserById>;
   const mockedUpdateUserProfile = updateUserProfile as jest.MockedFunction<typeof updateUserProfile>;
+  const mockedLaunchImageLibrary = launchImageLibrary as jest.MockedFunction<typeof launchImageLibrary>;
 
   beforeEach(() => {
     mockedUseNavigation.mockReturnValue({ goBack: mockGoBack } as never);
@@ -39,6 +49,7 @@ describe('EditProfileScreen', () => {
       birth_date: '31/12/2000',
     });
     mockedUpdateUserProfile.mockResolvedValue(undefined);
+    mockedLaunchImageLibrary.mockResolvedValue({ didCancel: true } as never);
     auth.currentUser = { uid: 'user-123' } as never;
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   });
@@ -150,5 +161,37 @@ describe('EditProfileScreen', () => {
 
     expect(screen.getByDisplayValue('(61) 98888-7777')).toBeTruthy();
     expect(screen.getByDisplayValue('01/01/2001')).toBeTruthy();
+  });
+
+  it('uploads the selected avatar together with the profile data', async () => {
+    mockedLaunchImageLibrary.mockResolvedValue({
+      assets: [{
+        uri: 'file:///avatar.jpg',
+        fileName: 'avatar.jpg',
+        type: 'image/jpeg',
+        fileSize: 1024,
+      }],
+    } as never);
+
+    render(<EditProfileScreen />);
+
+    await waitFor(() => {
+      expect(mockedGetCurrentUserById).toHaveBeenCalled();
+    });
+
+    fireEvent.press(screen.getByText('Escolher foto'));
+    await waitFor(() => {
+      expect(mockedLaunchImageLibrary).toHaveBeenCalled();
+    });
+    fireEvent.press(screen.getByText('Salvar'));
+
+    await waitFor(() => {
+      expect(mockedUpdateUserProfile).toHaveBeenCalledWith('user-123', expect.objectContaining({
+        profileImage: expect.objectContaining({
+          uri: 'file:///avatar.jpg',
+          fileName: 'avatar.jpg',
+        }),
+      }));
+    });
   });
 });

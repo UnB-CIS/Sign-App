@@ -10,11 +10,14 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { auth } from '../../services/firebase';
 import { getCurrentUserById, updateUserProfile } from '../../services/models/user';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../theme';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { UploadableImage, validateImageAsset } from '../../services/storage';
 
 const BIRTH_DATE_REGEX = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
 const GENDER_OPTIONS = ['Masculino', 'Feminino', 'Outro'] as const;
@@ -64,6 +67,8 @@ export default function EditProfileScreen() {
   const [gender, setGender] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [isGenderSelectOpen, setIsGenderSelectOpen] = useState(false);
+  const [profilePictureUrl, setProfilePictureUrl] = useState('');
+  const [profileImage, setProfileImage] = useState<UploadableImage | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -75,10 +80,48 @@ export default function EditProfileScreen() {
           setPhone(formatPhone(profile.phone || ''));
           setGender(profile.gender || '');
           setBirthDate(formatBirthDate(profile.birth_date || ''));
+          setProfilePictureUrl(profile.profilePictureUrl || '');
         }
       }).catch(console.error);
     }
   }, []);
+
+  const handleChooseAvatar = async () => {
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      selectionLimit: 1,
+      includeBase64: false,
+    });
+
+    if (result.didCancel) {
+      return;
+    }
+
+    if (result.errorMessage) {
+      Alert.alert('Erro', 'Não foi possível selecionar a imagem.');
+      return;
+    }
+
+    const asset = result.assets?.[0];
+    if (!asset?.uri) {
+      Alert.alert('Erro', 'Selecione uma imagem válida.');
+      return;
+    }
+
+    try {
+      const nextImage: UploadableImage = {
+        uri: asset.uri,
+        fileName: asset.fileName,
+        type: asset.type,
+        fileSize: asset.fileSize,
+      };
+      validateImageAsset(nextImage);
+      setProfileImage(nextImage);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Não foi possível selecionar a imagem.';
+      Alert.alert('Erro', message);
+    }
+  };
 
   const handleSave = async () => {
     const uid = auth.currentUser?.uid;
@@ -122,6 +165,7 @@ export default function EditProfileScreen() {
         phone: trimmedPhone,
         gender: trimmedGender,
         birth_date: trimmedBirthDate,
+        ...(profileImage ? { profileImage } : {}),
       });
       Alert.alert('Sucesso', 'Perfil atualizado!', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -140,6 +184,25 @@ export default function EditProfileScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.avatarSection}>
+          <View style={styles.avatarPreview}>
+            {profileImage?.uri || profilePictureUrl ? (
+              <Image
+                source={{ uri: profileImage?.uri || profilePictureUrl }}
+                style={styles.avatarImage}
+              />
+            ) : (
+              <Text style={styles.avatarInitial}>
+                {(name.trim().charAt(0) || 'U').toUpperCase()}
+              </Text>
+            )}
+          </View>
+          <TouchableOpacity style={styles.avatarButton} onPress={handleChooseAvatar}>
+            <Text style={styles.avatarButtonText}>Escolher foto</Text>
+          </TouchableOpacity>
+          <Text style={styles.avatarHint}>PNG, JPG ou WEBP com ate 5 MB</Text>
+        </View>
+
         <Text style={styles.label}>Nome completo</Text>
         <TextInput
           style={styles.input}
@@ -227,6 +290,48 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: Colors.background },
   content: {
     padding: Spacing.lg,
+  },
+  avatarSection: {
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+    gap: Spacing.sm,
+  },
+  avatarPreview: {
+    width: 108,
+    height: 108,
+    borderRadius: 54,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarInitial: {
+    fontSize: FontSize.xxl,
+    fontWeight: '700',
+    color: Colors.primary,
+  },
+  avatarButton: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  avatarButtonText: {
+    color: Colors.primary,
+    fontSize: FontSize.md,
+    fontWeight: '600',
+  },
+  avatarHint: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.sm,
   },
   label: {
     fontSize: FontSize.sm,

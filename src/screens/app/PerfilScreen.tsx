@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { auth } from '../../services/firebase';
@@ -43,7 +43,11 @@ export default function PerfilScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.avatarSection}>
         <View style={styles.avatar}>
-          <Ionicons name="person" size={48} color={Colors.textOnPrimary} />
+          {profile?.profilePictureUrl ? (
+            <Image source={{ uri: profile.profilePictureUrl }} style={styles.avatarImage} />
+          ) : (
+            <Ionicons name="person" size={48} color={Colors.textOnPrimary} />
+          )}
         </View>
         <Text style={styles.name}>{name}</Text>
         <Text style={styles.email}>{email}</Text>
@@ -124,6 +128,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.md,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   name: {
     fontSize: FontSize.xl,

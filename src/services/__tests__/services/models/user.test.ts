@@ -5,6 +5,11 @@ jest.mock('../../../firebase', () => ({
   db: 'mock-db',
 }));
 
+jest.mock('../../../storage', () => ({
+  deleteFileByUrl: jest.fn(),
+  uploadUserAvatar: jest.fn(),
+}));
+
 jest.mock('firebase/firestore', () => ({
   Timestamp: class Timestamp {},
   deleteField: jest.fn(() => '__DELETE_FIELD__'),
@@ -26,6 +31,7 @@ import { deleteField, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Collections } from '../../../enums';
 import { signInWithEmail, updateUserProfile } from '../../../models/user';
+import { deleteFileByUrl, uploadUserAvatar } from '../../../storage';
 
 describe('user model', () => {
   const mockedDeleteField = deleteField as jest.MockedFunction<typeof deleteField>;
@@ -34,13 +40,22 @@ describe('user model', () => {
   const mockedSetDoc = setDoc as jest.MockedFunction<typeof setDoc>;
   const mockedSignInWithEmailAndPassword = signInWithEmailAndPassword as jest.MockedFunction<typeof signInWithEmailAndPassword>;
   const mockedUpdateDoc = updateDoc as jest.MockedFunction<typeof updateDoc>;
+  const mockedDeleteFileByUrl = deleteFileByUrl as jest.MockedFunction<typeof deleteFileByUrl>;
   const mockedAuth = auth as { currentUser: null | { uid: string; email?: string | null; displayName?: string | null } };
+  const mockedUploadUserAvatar = uploadUserAvatar as jest.MockedFunction<typeof uploadUserAvatar>;
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockedDeleteField.mockImplementation(() => '__DELETE_FIELD__' as never);
     mockedDoc.mockImplementation(((_db, collection, id) => `${collection}/${id}`) as typeof doc);
     mockedAuth.currentUser = null;
+    mockedUploadUserAvatar.mockResolvedValue({
+      downloadUrl: 'https://example.com/avatar.jpg',
+      fullPath: 'avatars/user-123/avatar.jpg',
+      contentType: 'image/jpeg',
+      size: 1024,
+    });
+    mockedDeleteFileByUrl.mockResolvedValue(undefined);
   });
 
   describe('updateUserProfile', () => {
@@ -153,6 +168,40 @@ describe('user model', () => {
       expect(mockedUpdateDoc).toHaveBeenCalledWith(`${Collections.USERS}/user-123`, {
         name: 'Maria Silva',
       });
+    });
+
+    it('uploads the avatar and persists the download URL', async () => {
+      mockedGetDoc.mockResolvedValue({
+        exists: () => true,
+        data: () => ({
+          _id: 'user-123',
+          profilePictureUrl: 'https://example.com/old-avatar.jpg',
+        }),
+      } as never);
+      mockedAuth.currentUser = {
+        uid: 'user-123',
+        email: 'maria@example.com',
+        displayName: 'Maria Silva',
+      };
+
+      await updateUserProfile('user-123', {
+        name: 'Maria Silva',
+        profileImage: {
+          uri: 'file:///avatar.jpg',
+          fileName: 'avatar.jpg',
+          type: 'image/jpeg',
+          fileSize: 1024,
+        },
+      });
+
+      expect(mockedUploadUserAvatar).toHaveBeenCalledWith('user-123', expect.objectContaining({
+        uri: 'file:///avatar.jpg',
+      }));
+      expect(mockedUpdateDoc).toHaveBeenCalledWith(`${Collections.USERS}/user-123`, {
+        name: 'Maria Silva',
+        profilePictureUrl: 'https://example.com/avatar.jpg',
+      });
+      expect(mockedDeleteFileByUrl).toHaveBeenCalledWith('https://example.com/old-avatar.jpg');
     });
   });
 

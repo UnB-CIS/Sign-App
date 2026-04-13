@@ -10,12 +10,15 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { auth } from '../../services/firebase';
 import { createBugReport, BugType } from '../../services/models/bugReports';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../theme';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { MAX_BUG_REPORT_IMAGES, UploadableImage, validateBugReportImages } from '../../services/storage';
 
 const BUG_TYPES: { label: string; value: BugType }[] = [
   { label: 'Interface (UI)', value: 'ui' },
@@ -30,7 +33,7 @@ export default function BugReportScreen() {
   const [bugType, setBugType] = useState<BugType | null>(null);
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
-  const [imageCount, setImageCount] = useState(0);
+  const [images, setImages] = useState<UploadableImage[]>([]);
 
   const handleSubmit = async () => {
     if (!bugType) {
@@ -54,6 +57,7 @@ export default function BugReportScreen() {
         userId: uid,
         type: bugType,
         description: description.trim(),
+        images,
       });
       Alert.alert('Sucesso', 'Bug reportado! Obrigado pelo feedback.', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -65,13 +69,48 @@ export default function BugReportScreen() {
     }
   };
 
-  const handleAddImage = () => {
-    if (imageCount >= 3) {
-      Alert.alert('Limite', 'Máximo de 3 imagens.');
+  const handleAddImage = async () => {
+    if (images.length >= MAX_BUG_REPORT_IMAGES) {
+      Alert.alert('Limite', `Máximo de ${MAX_BUG_REPORT_IMAGES} imagens.`);
       return;
     }
-    setImageCount(imageCount + 1);
-    Alert.alert('Em breve', 'Funcionalidade de anexo em desenvolvimento.');
+
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      selectionLimit: MAX_BUG_REPORT_IMAGES - images.length,
+      includeBase64: false,
+    });
+
+    if (result.didCancel) {
+      return;
+    }
+
+    if (result.errorMessage) {
+      Alert.alert('Erro', 'Não foi possível selecionar as imagens.');
+      return;
+    }
+
+    const nextImages = [
+      ...images,
+      ...(result.assets ?? []).flatMap((asset) => (asset.uri ? [{
+        uri: asset.uri,
+        fileName: asset.fileName,
+        type: asset.type,
+        fileSize: asset.fileSize,
+      }] : [])),
+    ];
+
+    try {
+      validateBugReportImages(nextImages);
+      setImages(nextImages);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Não foi possível selecionar as imagens.';
+      Alert.alert('Erro', message);
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setImages((current) => current.filter((_, currentIndex) => currentIndex !== index));
   };
 
   return (
@@ -108,11 +147,27 @@ export default function BugReportScreen() {
           textAlignVertical="top"
         />
 
-        <Text style={styles.sectionTitle}>Imagens ({imageCount}/3)</Text>
+        <Text style={styles.sectionTitle}>Imagens ({images.length}/{MAX_BUG_REPORT_IMAGES})</Text>
         <TouchableOpacity style={styles.imageButton} onPress={handleAddImage}>
           <Ionicons name="camera-outline" size={24} color={Colors.primary} />
           <Text style={styles.imageButtonText}>Adicionar imagem</Text>
         </TouchableOpacity>
+        {images.length ? (
+          <View style={styles.previewList}>
+            {images.map((image, index) => (
+              <View key={`${image.uri}-${index}`} style={styles.previewCard}>
+                <Image source={{ uri: image.uri }} style={styles.previewImage} />
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={() => handleRemoveImage(index)}
+                >
+                  <Ionicons name="close-circle" size={20} color={Colors.error} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        ) : null}
+        <Text style={styles.imageHint}>Ate 3 imagens de ate 5 MB cada.</Text>
 
         <TouchableOpacity
           style={[styles.submitButton, loading && styles.submitDisabled]}
@@ -194,6 +249,37 @@ const styles = StyleSheet.create({
   imageButtonText: {
     fontSize: FontSize.md,
     color: Colors.primary,
+  },
+  previewList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  previewCard: {
+    width: 92,
+    height: 92,
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    position: 'relative',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: Colors.background,
+    borderRadius: 10,
+  },
+  imageHint: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xl,
   },
   submitButton: {
     width: '100%',

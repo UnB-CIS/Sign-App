@@ -116,12 +116,18 @@ export default function AppNavigator() {
         name="Configuracoes"
         component={ConfiguracoesScreen}
         options={{ title: 'Configurações' }}
+      />
+      <Stack.Screen
         name="Progresso"
         component={ProgressoScreen}
         options={{ title: 'Meu Progresso' }}
+      />
+      <Stack.Screen
         name="Quiz"
         component={QuizScreen}
         options={{ title: 'Quiz' }}
+      />
+      <Stack.Screen
         name="ModuleDetail"
         component={ModuleDetailScreen}
         options={{ title: 'Módulo' }}

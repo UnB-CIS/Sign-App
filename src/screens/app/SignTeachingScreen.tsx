@@ -26,30 +26,23 @@ export default function SignTeachingScreen() {
   const currentVocab = lesson.vocabulary[0];
 
   const handleContinue = () => {
-    const hasVideoQuestion = lesson.activities.some((a) =>
-      a.questions.some((q) => q.type === 'video_record')
-    );
+    const questions = lesson.activities.flatMap((activity) => activity.questions);
 
-    if (hasVideoQuestion) {
-      const videoQ = lesson.activities
-        .flatMap((a) => a.questions)
-        .find((q) => q.type === 'video_record');
-      if (videoQ) {
-        navigation.navigate('SignRecording', {
-          lessonId,
-          questionId: videoQ.id,
-          moduleId,
-          xpEarned: lesson.xpReward,
-        });
-        return;
-      }
+    if (questions.length === 0) {
+      navigation.navigate('LessonComplete', {
+        lessonId,
+        moduleId,
+        score: 85,
+        xpEarned: lesson.xpReward,
+      });
+      return;
     }
 
-    navigation.navigate('LessonComplete', {
+    navigation.navigate('Quiz', {
       lessonId,
       moduleId,
-      score: 85,
-      xpEarned: lesson.xpReward,
+      xpReward: lesson.xpReward,
+      questions,
     });
   };
 

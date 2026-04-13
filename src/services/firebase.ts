@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuth, initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // Try to load android google-services.json (you already added it at android/app/google-services.json)
 // If you prefer, paste the web config from Firebase Console directly into `firebaseConfig`.
@@ -39,3 +40,4 @@ export const auth = (() => {
     }
 })();
 export const db = getFirestore(app);
+export const storage = getStorage(app);

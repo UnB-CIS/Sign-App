@@ -3,7 +3,7 @@
  * Executar com: npx ts-node src/scripts/seedLessons.ts
  */
 import { MODULES } from '../data/modules';
-import { createCourse, addModule, addLessonToModule, CourseLessonRef, CourseModule } from '../services/models/courses';
+import { createCourse, addModule, CourseLessonRef, CourseModule } from '../services/models/courses';
 import { createLesson, StorableLesson, LessonQuestion } from '../services/models/lessons';
 
 const COURSE_ID = 'libras-basico';
@@ -30,6 +30,10 @@ async function seed() {
           prompt: q.prompt,
           options: q.options,
           correctAnswer: q.correctAnswer,
+          url_video: q.url_video ?? q.videoUrl,
+          url_videos: q.url_videos,
+          targetWord: q.targetWord,
+          instruction: q.instruction,
         } as LessonQuestion))
       );
 

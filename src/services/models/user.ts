@@ -2,6 +2,7 @@ import { deleteField, doc, getDoc, serverTimestamp, setDoc, updateDoc, Timestamp
 import { db, auth } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, User, UserCredential } from 'firebase/auth';
 import { Collections } from '../enums';
+import { deleteFileByUrl, UploadableImage, uploadUserAvatar } from '../storage';
 
 export interface UserProfile {
     _id: string;
@@ -40,6 +41,7 @@ interface currentLeague {
 
 export type UserProfileUpdates =
     Partial<Pick<UserProfile, 'name' | 'username' | 'phone' | 'gender' | 'birth_date' | 'profilePictureUrl' | 'settings'>>
+    & { profileImage?: UploadableImage | null }
     & Record<string, any>;
 
 const BIRTH_DATE_REGEX = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
@@ -94,7 +96,7 @@ function isValidBirthDate(value: string) {
 }
 
 function buildUserProfileUpdates(updates: UserProfileUpdates) {
-    const sanitized: Record<string, any> = { ...updates };
+    const sanitized: Record<string, any> = {};
 
     if (typeof updates.name === 'string') {
         const name = updates.name.trim();
@@ -146,6 +148,10 @@ function buildUserProfileUpdates(updates: UserProfileUpdates) {
         sanitized.profilePictureUrl = profilePictureUrl ?? deleteField();
     }
 
+    if ('settings' in updates && updates.settings) {
+        sanitized.settings = updates.settings;
+    }
+
     return sanitized;
 }
 
@@ -194,7 +200,7 @@ async function ensureUserProfileDocument(user: Pick<User, 'uid' | 'email' | 'dis
 }
 
 async function registerUserWithEmail(
-    { email, password, username, name, profileFile }: { email: string; password: string; username: string; name?: string; profileFile?: File | null }
+    { email, password, username, name, profileImage }: { email: string; password: string; username: string; name?: string; profileImage?: UploadableImage | null }
 ): Promise<string> {
 
     try {
@@ -205,12 +211,13 @@ async function registerUserWithEmail(
         if (name) {
             await updateProfile(user, { displayName: name });
         }
+        const uploadedAvatar = profileImage ? await uploadUserAvatar(user.uid, profileImage) : null;
         const userDoc: UserProfile = {
             _id: user.uid,
             username,
             email,
             ...(name ? { name } : {}),
-            ...(profileFile ? { profilePictureUrl: `profiles/${user.uid}/${profileFile.name}` } : {}),
+            ...(uploadedAvatar ? { profilePictureUrl: uploadedAvatar.downloadUrl } : {}),
             createdAt: serverTimestamp(),
             streak: { current: 0, longest: 0 },
             xp: 0,
@@ -249,10 +256,30 @@ async function updateUserProfile(
     updates: UserProfileUpdates
 ) {
     const ref = doc(db, Collections.USERS, uid);
+    const { profileImage, ...profileUpdates } = updates;
+    const sanitizedUpdates = buildUserProfileUpdates(profileUpdates);
+    let previousProfile: UserProfile | null = null;
+
     if (auth.currentUser?.uid === uid) {
-        await ensureUserProfileDocument(auth.currentUser);
+        previousProfile = await ensureUserProfileDocument(auth.currentUser);
+    } else {
+        previousProfile = await getCurrentUserById(uid);
     }
-    await updateDoc(ref, buildUserProfileUpdates(updates));
+
+    if (profileImage) {
+        const uploadedAvatar = await uploadUserAvatar(uid, profileImage);
+        sanitizedUpdates.profilePictureUrl = uploadedAvatar.downloadUrl;
+
+        if (previousProfile?.profilePictureUrl && previousProfile.profilePictureUrl !== uploadedAvatar.downloadUrl) {
+            try {
+                await deleteFileByUrl(previousProfile.profilePictureUrl);
+            } catch (error) {
+                console.warn('Previous avatar cleanup failed.', error);
+            }
+        }
+    }
+
+    await updateDoc(ref, sanitizedUpdates);
 }
 
 async function getUserStreak(uid: string): Promise<Streak | null> {

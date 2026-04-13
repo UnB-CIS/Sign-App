@@ -20,6 +20,8 @@ export type MultipleChoiceQuestion = {
     prompt: string;
     options: string[];
     correctAnswer: string; // index or id as string
+    url_video?: string;
+    targetWord?: string;
 };
 
 export type VideoRecordQuestion = {
@@ -27,6 +29,8 @@ export type VideoRecordQuestion = {
     prompt: string;
     url_video?: string;
     correctAnswer?: string;
+    targetWord?: string;
+    instruction?: string;
 };
 
 export type MultipleChoiceVideoQuestion = {
@@ -34,6 +38,7 @@ export type MultipleChoiceVideoQuestion = {
     prompt: string;
     url_videos: string[];
     correctAnswer: string;
+    targetWord?: string;
 };
 
 export type LessonQuestion =

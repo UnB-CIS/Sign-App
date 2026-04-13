@@ -20,6 +20,10 @@ export interface Question {
   options?: string[];
   correctAnswer?: string;
   videoUrl?: string;
+  url_video?: string;
+  url_videos?: string[];
+  targetWord?: string;
+  instruction?: string;
 }
 
 export interface Activity {

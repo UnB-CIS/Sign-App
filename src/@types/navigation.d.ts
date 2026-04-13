@@ -16,12 +16,17 @@ export type AppStackParamList = {
   Quiz: {
     lessonId: string;
     moduleId: string;
+    xpReward: number;
     questions: {
       id: string;
       prompt: string;
       options?: string[];
       correctAnswer?: string;
       type: string;
+      url_video?: string;
+      url_videos?: string[];
+      targetWord?: string;
+      instruction?: string;
     }[];
   };
   ModuleDetail: { moduleId: string };
