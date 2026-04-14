@@ -124,3 +124,5 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
 }
+
+apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
