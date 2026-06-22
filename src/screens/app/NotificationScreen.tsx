@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Colors, Spacing, BorderRadius, FontSize } from '../../theme';
+import { ThemeColors } from '../../theme/colors';
+import { useThemeColors, useFontScale } from '../../contexts/AccessibilityContext';
 
 type TipoNotificacao = 'lembrete' | 'conquista' | 'social' | 'sistema';
 
@@ -116,6 +118,8 @@ type CartaoProps = {
   onAcao: (item: Notificacao) => void;
   onMarcarLida: (id: string) => void;
   onExcluir: (id: string) => void;
+  colors: ThemeColors;
+  fontScale: number;
 };
 
 function CartaoNotificacao({
@@ -124,8 +128,11 @@ function CartaoNotificacao({
   onAcao,
   onMarcarLida,
   onExcluir,
+  colors,
+  fontScale,
 }: CartaoProps) {
   const config = CONFIG_TIPO[item.tipo];
+  const styles = useStyles(colors, fontScale);
 
   return (
     <TouchableOpacity
@@ -133,6 +140,9 @@ function CartaoNotificacao({
       onPress={() => onLer(item.id)}
       onLongPress={() => onExcluir(item.id)}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.lida ? 'Lida' : 'Não lida'}. ${item.titulo}. ${item.mensagem}. ${item.tempo}`}
+      accessibilityHint="Toque para marcar como lida. Pressione e segure para excluir."
     >
       <View style={styles.linhaTopo}>
         <View style={[styles.iconeContainer, { backgroundColor: config.cor + '1A' }]}>
@@ -152,7 +162,9 @@ function CartaoNotificacao({
             {item.mensagem}
           </Text>
         </View>
-        {!item.lida && <View style={styles.indicadorNaoLido} />}
+        {!item.lida && (
+          <View style={styles.indicadorNaoLido} accessibilityLabel="Não lida" />
+        )}
       </View>
 
       <View style={styles.acoes}>
@@ -160,6 +172,8 @@ function CartaoNotificacao({
           style={[styles.botaoAcaoPrincipal, { backgroundColor: config.cor + '1A' }]}
           onPress={() => onAcao(item)}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={config.acaoLabel}
         >
           <Ionicons name={config.acaoIcone} size={16} color={config.cor} />
           <Text style={[styles.botaoAcaoTexto, { color: config.cor }]}>
@@ -173,8 +187,10 @@ function CartaoNotificacao({
               style={styles.botaoSecundario}
               onPress={() => onMarcarLida(item.id)}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Marcar como lida"
             >
-              <Ionicons name="checkmark-done-outline" size={16} color={Colors.textSecondary} />
+              <Ionicons name="checkmark-done-outline" size={16} color={colors.textSecondary} />
               <Text style={styles.botaoSecundarioTexto}>Marcar como lida</Text>
             </TouchableOpacity>
           )}
@@ -182,9 +198,11 @@ function CartaoNotificacao({
             style={styles.botaoSecundario}
             onPress={() => onExcluir(item.id)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Excluir notificação"
           >
-            <Ionicons name="trash-outline" size={16} color={Colors.error} />
-            <Text style={[styles.botaoSecundarioTexto, { color: Colors.error }]}>
+            <Ionicons name="trash-outline" size={16} color={colors.error} />
+            <Text style={[styles.botaoSecundarioTexto, { color: colors.error }]}>
               Excluir
             </Text>
           </TouchableOpacity>
@@ -195,6 +213,9 @@ function CartaoNotificacao({
 }
 
 export default function NotificationScreen() {
+  const colors = useThemeColors();
+  const fontScale = useFontScale();
+  const styles = useStyles(colors, fontScale);
   const [filtro, setFiltro] = useState<(typeof FILTROS)[number]>('Todas');
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>(buscarNotificacoesMock);
 
@@ -242,7 +263,12 @@ export default function NotificationScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.headerActions}>
         {naoLidas > 0 && (
-          <TouchableOpacity onPress={marcarTodasLidas} activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={marcarTodasLidas}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Marcar todas como lidas"
+          >
             <Text style={styles.marcarTodas}>Marcar todas como lidas</Text>
           </TouchableOpacity>
         )}
@@ -260,6 +286,9 @@ export default function NotificationScreen() {
               style={[styles.filtroChip, filtro === item && styles.filtroChipAtivo]}
               onPress={() => setFiltro(item)}
               activeOpacity={0.7}
+              accessibilityRole="tab"
+              accessibilityLabel={`Filtro ${item}`}
+              accessibilityState={{ selected: filtro === item }}
             >
               <Text
                 style={[styles.filtroTexto, filtro === item && styles.filtroTextoAtivo]}
@@ -279,7 +308,7 @@ export default function NotificationScreen() {
         ItemSeparatorComponent={() => <View style={styles.separador} />}
         ListEmptyComponent={
           <View style={styles.vazio}>
-            <Ionicons name="notifications-off-outline" size={48} color={Colors.border} />
+            <Ionicons name="notifications-off-outline" size={48} color={colors.border} />
             <Text style={styles.vazioTexto}>Nenhuma notificação</Text>
           </View>
         }
@@ -290,6 +319,8 @@ export default function NotificationScreen() {
             onAcao={executarAcao}
             onMarcarLida={marcarComoLida}
             onExcluir={excluir}
+            colors={colors}
+            fontScale={fontScale}
           />
         )}
       />
@@ -297,157 +328,163 @@ export default function NotificationScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.sm,
-  },
-  marcarTodas: {
-    fontSize: FontSize.sm,
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  filtrosWrapper: {
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  filtros: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
-  },
-  filtroChip: {
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.round,
-    backgroundColor: Colors.surface,
-    marginRight: Spacing.sm,
-  },
-  filtroChipAtivo: {
-    backgroundColor: Colors.primary,
-  },
-  filtroTexto: {
-    fontSize: FontSize.md,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  filtroTextoAtivo: {
-    color: Colors.textOnPrimary,
-  },
-  lista: {
-    padding: Spacing.base,
-    paddingBottom: Spacing.lg,
-  },
-  separador: {
-    height: Spacing.md,
-  },
-  notificacao: {
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    padding: Spacing.base,
-  },
-  notificacaoNaoLida: {
-    backgroundColor: Colors.surface,
-    borderColor: Colors.borderAccent,
-  },
-  linhaTopo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconeContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  notificacaoInfo: {
-    flex: 1,
-    marginLeft: Spacing.md,
-  },
-  notificacaoHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  notificacaoTitulo: {
-    flex: 1,
-    fontSize: FontSize.base,
-    fontWeight: '500',
-    color: Colors.text,
-  },
-  textoNaoLido: {
-    fontWeight: '700',
-  },
-  tempo: {
-    fontSize: FontSize.sm,
-    color: Colors.textLight,
-    marginLeft: Spacing.sm,
-  },
-  mensagem: {
-    fontSize: FontSize.md,
-    color: Colors.textSecondary,
-    marginTop: Spacing.xs,
-    lineHeight: 18,
-  },
-  indicadorNaoLido: {
-    width: 8,
-    height: 8,
-    borderRadius: BorderRadius.round,
-    backgroundColor: Colors.primary,
-    marginLeft: Spacing.sm,
-  },
-  acoes: {
-    marginTop: Spacing.md,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-    gap: Spacing.sm,
-  },
-  botaoAcaoPrincipal: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-  },
-  botaoAcaoTexto: {
-    fontSize: FontSize.md,
-    fontWeight: '600',
-  },
-  acoesSecundarias: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.base,
-  },
-  botaoSecundario: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.xs,
-  },
-  botaoSecundarioTexto: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  vazio: {
-    alignItems: 'center',
-    paddingTop: Spacing.xxxl + Spacing.lg,
-  },
-  vazioTexto: {
-    fontSize: FontSize.base,
-    color: Colors.textSecondary,
-    marginTop: Spacing.md,
-  },
-});
+function useStyles(colors: ThemeColors, fontScale: number) {
+  return useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        headerActions: {
+          flexDirection: 'row',
+          justifyContent: 'flex-end',
+          paddingHorizontal: Spacing.base,
+          paddingTop: Spacing.sm,
+        },
+        marcarTodas: {
+          fontSize: FontSize.sm * fontScale,
+          color: colors.primary,
+          fontWeight: '600',
+        },
+        filtrosWrapper: {
+          borderBottomWidth: 1,
+          borderBottomColor: colors.borderLight,
+        },
+        filtros: {
+          paddingHorizontal: Spacing.base,
+          paddingVertical: Spacing.md,
+          gap: Spacing.sm,
+        },
+        filtroChip: {
+          paddingHorizontal: Spacing.base,
+          paddingVertical: Spacing.sm,
+          borderRadius: BorderRadius.round,
+          backgroundColor: colors.surface,
+          marginRight: Spacing.sm,
+        },
+        filtroChipAtivo: {
+          backgroundColor: colors.primary,
+        },
+        filtroTexto: {
+          fontSize: FontSize.md * fontScale,
+          color: colors.textSecondary,
+          fontWeight: '500',
+        },
+        filtroTextoAtivo: {
+          color: colors.textOnPrimary,
+        },
+        lista: {
+          padding: Spacing.base,
+          paddingBottom: Spacing.lg,
+        },
+        separador: {
+          height: Spacing.md,
+        },
+        notificacao: {
+          backgroundColor: colors.card,
+          borderRadius: BorderRadius.lg,
+          borderWidth: 1,
+          borderColor: colors.borderLight,
+          padding: Spacing.base,
+        },
+        notificacaoNaoLida: {
+          backgroundColor: colors.surface,
+          borderColor: colors.borderAccent,
+        },
+        linhaTopo: {
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+        iconeContainer: {
+          width: 44,
+          height: 44,
+          borderRadius: BorderRadius.lg,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        notificacaoInfo: {
+          flex: 1,
+          marginLeft: Spacing.md,
+        },
+        notificacaoHeader: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        },
+        notificacaoTitulo: {
+          flex: 1,
+          fontSize: FontSize.base * fontScale,
+          fontWeight: '500',
+          color: colors.text,
+        },
+        textoNaoLido: {
+          fontWeight: '700',
+        },
+        tempo: {
+          fontSize: FontSize.sm * fontScale,
+          color: colors.textLight,
+          marginLeft: Spacing.sm,
+        },
+        mensagem: {
+          fontSize: FontSize.md * fontScale,
+          color: colors.textSecondary,
+          marginTop: Spacing.xs,
+          lineHeight: 18 * fontScale,
+        },
+        indicadorNaoLido: {
+          width: 8,
+          height: 8,
+          borderRadius: BorderRadius.round,
+          backgroundColor: colors.primary,
+          marginLeft: Spacing.sm,
+        },
+        acoes: {
+          marginTop: Spacing.md,
+          paddingTop: Spacing.md,
+          borderTopWidth: 1,
+          borderTopColor: colors.borderLight,
+          gap: Spacing.sm,
+        },
+        botaoAcaoPrincipal: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          alignSelf: 'flex-start',
+          gap: Spacing.xs,
+          paddingHorizontal: Spacing.md,
+          paddingVertical: Spacing.sm,
+          borderRadius: BorderRadius.md,
+        },
+        botaoAcaoTexto: {
+          fontSize: FontSize.md * fontScale,
+          fontWeight: '600',
+        },
+        acoesSecundarias: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: Spacing.base,
+        },
+        botaoSecundario: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: Spacing.xs,
+          paddingVertical: Spacing.xs,
+        },
+        botaoSecundarioTexto: {
+          fontSize: FontSize.sm * fontScale,
+          color: colors.textSecondary,
+          fontWeight: '500',
+        },
+        vazio: {
+          alignItems: 'center',
+          paddingTop: Spacing.xxxl + Spacing.lg,
+        },
+        vazioTexto: {
+          fontSize: FontSize.base * fontScale,
+          color: colors.textSecondary,
+          marginTop: Spacing.md,
+        },
+      }),
+    [colors, fontScale],
+  );
+}

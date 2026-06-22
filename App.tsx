@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { AuthProvider } from './src/contexts/AuthContext';
+import { AccessibilityProvider } from './src/contexts/AccessibilityContext';
 import { useAuth } from './src/hooks/useAuth';
 import SplashScreen from './src/screens/SplashScreen';
 import AuthNavigator from './src/navigation/AuthNavigator';
@@ -61,18 +62,20 @@ function RootNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer<RootStackParamList>
-        linking={linkingConfig}
-        fallback={
-          <View style={styles.loading}>
-            <ActivityIndicator size="large" />
-          </View>
-        }
-      >
-        <RootNavigator />
-      </NavigationContainer>
-    </AuthProvider>
+    <AccessibilityProvider>
+      <AuthProvider>
+        <NavigationContainer<RootStackParamList>
+          linking={linkingConfig}
+          fallback={
+            <View style={styles.loading}>
+              <ActivityIndicator size="large" />
+            </View>
+          }
+        >
+          <RootNavigator />
+        </NavigationContainer>
+      </AuthProvider>
+    </AccessibilityProvider>
   );
 }
 
