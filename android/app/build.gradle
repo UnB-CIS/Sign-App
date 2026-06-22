@@ -92,15 +92,29 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        // Config de assinatura de release lida das propriedades gradle.
+        // Veja android/RELEASE_SIGNING.md para gerar o keystore e setar as props.
+        if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
+            release {
+                storeFile file(MYAPP_RELEASE_STORE_FILE)
+                storePassword MYAPP_RELEASE_STORE_PASSWORD
+                keyAlias MYAPP_RELEASE_KEY_ALIAS
+                keyPassword MYAPP_RELEASE_KEY_PASSWORD
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Usa o keystore de release quando as props existem; caso contrário
+            // cai no debug para não quebrar o build local.
+            if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
