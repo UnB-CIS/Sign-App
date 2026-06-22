@@ -13,8 +13,15 @@ import {
 } from 'react-native';
 import { AuthScreenProps } from '../../@types/navigation';
 import { registerUserWithEmail } from '../../services/models/user';
+import { validatePasswordStrength, PasswordStrength } from '../../services/auth';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+
+const FORCA_CONFIG: Record<PasswordStrength, { rotulo: string; cor: string; preenchimento: number }> = {
+  fraca: { rotulo: 'Fraca', cor: Colors.error, preenchimento: 0.33 },
+  media: { rotulo: 'Média', cor: Colors.warning, preenchimento: 0.66 },
+  forte: { rotulo: 'Forte', cor: Colors.success, preenchimento: 1 },
+};
 
 export default function RegisterScreen({ navigation }: AuthScreenProps<'Register'>) {
   const [name, setName] = useState('');
@@ -23,6 +30,9 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const validacaoSenha = validatePasswordStrength(password);
+  const forcaConfig = FORCA_CONFIG[validacaoSenha.forca];
 
   const handleRegister = async () => {
     if (!name.trim()) {
@@ -33,8 +43,9 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
       Alert.alert('Erro', 'Preencha seu email.');
       return;
     }
-    if (password.length < 6) {
-      Alert.alert('Erro', 'A senha deve ter no mínimo 6 caracteres.');
+    const resultadoSenha = validatePasswordStrength(password);
+    if (!resultadoSenha.valido) {
+      Alert.alert('Senha inválida', resultadoSenha.erros.join('\n'));
       return;
     }
     if (!acceptedTerms) {
@@ -50,9 +61,11 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
         username: email.split('@')[0],
         name: name.trim(),
       });
-      Alert.alert('Sucesso', 'Conta criada! Faça login para continuar.', [
-        { text: 'OK', onPress: () => navigation.navigate('Login') },
-      ]);
+      Alert.alert(
+        'Conta criada',
+        'Enviamos um e-mail de verificação para você. Confira sua caixa de entrada e verifique o e-mail antes de entrar.',
+        [{ text: 'OK', onPress: () => navigation.navigate('Login') }],
+      );
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Não foi possível criar a conta.';
       Alert.alert('Erro no Cadastro', msg);
@@ -124,6 +137,32 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
               />
             </TouchableOpacity>
           </View>
+
+          {/* Indicador de força da senha */}
+          {password.length > 0 && (
+            <View style={styles.strengthContainer}>
+              <View style={styles.strengthBarTrack}>
+                <View
+                  style={[
+                    styles.strengthBarFill,
+                    { width: `${forcaConfig.preenchimento * 100}%`, backgroundColor: forcaConfig.cor },
+                  ]}
+                />
+              </View>
+              <Text style={[styles.strengthLabel, { color: forcaConfig.cor }]}>
+                Força: {forcaConfig.rotulo}
+              </Text>
+              {validacaoSenha.erros.length > 0 && (
+                <View style={styles.strengthHints}>
+                  {validacaoSenha.erros.map((erro) => (
+                    <Text key={erro} style={styles.strengthHint}>
+                      • {erro}
+                    </Text>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
 
           {/* Terms checkbox */}
           <TouchableOpacity
@@ -244,6 +283,33 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     padding: Spacing.xs,
+  },
+  strengthContainer: {
+    marginBottom: Spacing.base,
+  },
+  strengthBarTrack: {
+    height: 6,
+    borderRadius: BorderRadius.round,
+    backgroundColor: Colors.progressTrack,
+    overflow: 'hidden',
+  },
+  strengthBarFill: {
+    height: '100%',
+    borderRadius: BorderRadius.round,
+  },
+  strengthLabel: {
+    marginTop: Spacing.xs,
+    fontSize: FontSize.sm,
+    fontWeight: '600',
+  },
+  strengthHints: {
+    marginTop: Spacing.xs,
+    gap: 2,
+  },
+  strengthHint: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
+    lineHeight: 18,
   },
   termsRow: {
     flexDirection: 'row',
