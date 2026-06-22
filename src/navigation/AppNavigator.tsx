@@ -93,8 +93,22 @@ function MainTabsNavigator() {
 
       <Tab.Screen name="Pesquisar" component={PesquisarScreen} options={{ title: 'Pesquisar' }} />
       <Tab.Screen name="NewPost" component={NewPostScreen} options={{ title: 'Novo Post' }} />
-      <Tab.Screen name="Eventos" component={EventosScreen} />
-      <Tab.Screen name="Perfil" component={PerfilScreen} />
+      <Tab.Screen
+        name="Eventos"
+        component={EventosScreen}
+        options={{
+          headerTitleAlign: 'center',
+          headerLeft: () => <HeaderLogo />,
+        }}
+      />
+      <Tab.Screen
+        name="Perfil"
+        component={PerfilScreen}
+        options={{
+          headerTitleAlign: 'center',
+          headerLeft: () => <HeaderLogo />,
+        }}
+      />
     </Tab.Navigator>
   );
 }
