@@ -1,0 +1,94 @@
+# Build do APK + publicação como GitHub Release (distribuição interna)
+name: Release APK
+
+on:
+  # Dispara ao enviar uma tag (ex: v0.1.0, app-0.1.0, debug-0.1.0)
+  push:
+    tags:
+      - 'v*'
+      - 'app-*'
+      - 'debug-*'
+  # Dispara manualmente, escolhendo a tag e o tipo de build
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag da release (ex: v0.1.0)'
+        required: true
+        type: string
+      variant:
+        description: 'Variante do build'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+      prerelease:
+        description: 'Marcar como pre-release'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build APK e publicar release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci --legacy-peer-deps
+
+      - name: Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # Define a variante (assembleDebug por padrão; assembleRelease se escolhido)
+      - name: Definir variante de build
+        id: variant
+        run: |
+          VAR="${{ github.event.inputs.variant }}"
+          if [ -z "$VAR" ]; then VAR="debug"; fi
+          if [ "$VAR" = "release" ]; then
+            echo "task=assembleRelease" >> "$GITHUB_OUTPUT"
+            echo "apk=android/app/build/outputs/apk/release/app-release.apk" >> "$GITHUB_OUTPUT"
+          else
+            echo "task=assembleDebug" >> "$GITHUB_OUTPUT"
+            echo "apk=android/app/build/outputs/apk/debug/app-debug.apk" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build do APK
+        working-directory: android
+        run: ./gradlew ${{ steps.variant.outputs.task }} --no-daemon
+
+      # Renomeia o APK incluindo a tag para ficar claro na release
+      - name: Preparar artefato
+        id: artifact
+        run: |
+          TAG="${{ github.event.inputs.tag }}"
+          if [ -z "$TAG" ]; then TAG="${GITHUB_REF_NAME}"; fi
+          OUT="Sign-${TAG}.apk"
+          cp "${{ steps.variant.outputs.apk }}" "$OUT"
+          echo "out=$OUT" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Publicar GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.artifact.outputs.tag }}
+          name: Sign ${{ steps.artifact.outputs.tag }}
+          prerelease: ${{ github.event.inputs.prerelease != 'false' }}
+          generate_release_notes: true
+          files: ${{ steps.artifact.outputs.out }}
