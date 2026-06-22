@@ -8,5 +8,6 @@ module.exports = {
     'node_modules/(?!(react-native|@react-native|@react-navigation)/)'
   ],
   testPathIgnorePatterns: ['/node_modules/', '/android/', '/ios/'],
+  setupFiles: ['<rootDir>/jest.setup.js'],
   resetMocks: true,
 };
