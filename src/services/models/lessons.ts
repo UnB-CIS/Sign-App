@@ -46,11 +46,32 @@ export type LessonQuestion =
     | VideoRecordQuestion
     | MultipleChoiceVideoQuestion;
 
+export interface LessonVocabularyItem {
+    id: string;
+    word: string;
+    translation: string;
+    videoUrl?: string;
+    imageUrl?: string;
+}
+
+export interface LessonGrammarPoint {
+    id: string;
+    title: string;
+    explanation: string;
+    examples: string[];
+}
+
 export interface StorableLesson {
     id?: string;
     title: string;
     courseId: string;
     moduleId: string;
+    description?: string;
+    order?: number;
+    xpReward?: number;
+    vocabulary?: LessonVocabularyItem[];
+    expressions?: string[];
+    grammar?: LessonGrammarPoint[];
     requirements?: string;
     questions: LessonQuestion[];
     createdAt?: any;

@@ -33,6 +33,7 @@ export async function getCourseModulesOverview(
   const unlockedModules = new Set(progress?.unlockedModules ?? (firstModuleId ? [firstModuleId] : []));
 
   return sortedModules.map((module, index) => {
+    // Firestore primeiro; modules.ts apenas como fallback offline.
     const localModule = MODULES.find((item) => item.id === module.moduleId);
     const totalLessons = module.lessons.length;
     const completedCount = module.lessons.filter((lesson) => completedLessons.has(lesson.lessonId)).length;
@@ -43,9 +44,9 @@ export async function getCourseModulesOverview(
     return {
       id: module.moduleId,
       title: module.title,
-      description: localModule?.description ?? course.description ?? 'Continue evoluindo neste módulo.',
-      objective: localModule?.objective ?? 'Concluir as lições deste módulo.',
-      iconName: localModule?.iconName ?? 'school',
+      description: module.description ?? localModule?.description ?? course.description ?? 'Continue evoluindo neste módulo.',
+      objective: module.objective ?? localModule?.objective ?? 'Concluir as lições deste módulo.',
+      iconName: module.iconName ?? localModule?.iconName ?? 'school',
       order: module.order,
       totalLessons,
       completedLessons: completedCount,

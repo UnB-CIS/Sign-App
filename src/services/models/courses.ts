@@ -27,6 +27,9 @@ export interface CourseModule {
     moduleId: string;
     title: string;
     order: number;
+    description?: string;
+    objective?: string;
+    iconName?: string;
     lessons: CourseLessonRef[];
 }
 
