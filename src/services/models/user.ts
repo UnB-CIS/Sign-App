@@ -3,6 +3,7 @@ import { db, auth } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, User, UserCredential } from 'firebase/auth';
 import { Collections } from '../enums';
 import { deleteFileByUrl, UploadableImage, uploadUserAvatar } from '../storage';
+import { sendVerificationEmail } from '../auth';
 
 export interface UserProfile {
     _id: string;
@@ -227,6 +228,13 @@ async function registerUserWithEmail(
             settings: { notifications: { practiceReminders: true, friendUpdates: false } },
         }
         await setDoc(doc(db, Collections.USERS, user.uid), userDoc);
+
+        try {
+            await sendVerificationEmail(user);
+        } catch (verificationError) {
+            console.warn('Falha ao enviar e-mail de verificação.', verificationError);
+        }
+
         return user.uid;
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
