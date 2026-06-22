@@ -1,5 +1,8 @@
 import { Module } from './types';
 
+// TODO: este arquivo agora é apenas FALLBACK offline. O conteúdo oficial vem do
+// Firestore (ver src/services/models/courseContent.ts). A aposentadoria final
+// deste arquivo acontece após o seed no Firebase real (rodar seedLessons.ts).
 export const MODULES: Module[] = [
   {
     id: 'mod-1',

@@ -1,19 +1,42 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { MODULES } from '../../data/modules';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../theme';
 import type { AppStackScreenProps } from '../../@types/navigation';
+import { getLessonContent, type LessonContent } from '../../services/models/courseContent';
 
 export default function SignTeachingScreen() {
   const route = useRoute<AppStackScreenProps<'SignTeaching'>['route']>();
   const navigation = useNavigation();
   const { lessonId, moduleId } = route.params;
   const [isPlaying, setIsPlaying] = useState(false);
+  const [lesson, setLesson] = useState<LessonContent | null | undefined>(undefined);
 
-  const mod = MODULES.find((m) => m.id === moduleId);
-  const lesson = mod?.lessons.find((l) => l.id === lessonId);
+  useEffect(() => {
+    let active = true;
+    getLessonContent(lessonId, moduleId)
+      .then((content) => {
+        if (active) setLesson(content ?? null);
+      })
+      .catch((error) => {
+        console.error(error);
+        if (active) setLesson(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [lessonId, moduleId]);
+
+  if (lesson === undefined) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.descriptionText}>Carregando lição...</Text>
+        </View>
+      </View>
+    );
+  }
 
   if (!lesson) {
     return (
@@ -26,7 +49,7 @@ export default function SignTeachingScreen() {
   const currentVocab = lesson.vocabulary[0];
 
   const handleContinue = () => {
-    const questions = lesson.activities.flatMap((activity) => activity.questions);
+    const questions = lesson.questions;
 
     if (questions.length === 0) {
       navigation.navigate('LessonComplete', {

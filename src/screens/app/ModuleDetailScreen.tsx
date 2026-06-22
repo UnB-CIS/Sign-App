@@ -1,20 +1,34 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { MODULES } from '../../data/modules';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../theme';
 import type { AppStackScreenProps } from '../../@types/navigation';
 import { auth } from '../../services/firebase';
 import { getModuleLessonProgress } from '../../services/models/userProgress';
+import { getModuleDetail, type ModuleDetail } from '../../services/models/courseContent';
 
 export default function ModuleDetailScreen() {
   const route = useRoute<AppStackScreenProps<'ModuleDetail'>['route']>();
   const navigation = useNavigation();
   const { moduleId } = route.params;
   const [lessonStatus, setLessonStatus] = useState<Record<string, { completed: boolean; locked: boolean }>>({});
+  const [mod, setMod] = useState<ModuleDetail | null | undefined>(undefined);
 
-  const mod = MODULES.find((m) => m.id === moduleId);
+  useEffect(() => {
+    let active = true;
+    getModuleDetail(moduleId)
+      .then((detail) => {
+        if (active) setMod(detail ?? null);
+      })
+      .catch((error) => {
+        console.error(error);
+        if (active) setMod(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [moduleId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -37,6 +51,14 @@ export default function ModuleDetailScreen() {
         });
     }, [moduleId])
   );
+
+  if (mod === undefined) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.description}>Carregando módulo...</Text>
+      </View>
+    );
+  }
 
   if (!mod) {
     return (
